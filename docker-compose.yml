@@ -1,64 +1,65 @@
 version: "3.9"
 
 services:
-  vitamins-backend:
-    container_name: vitamins-backend
+  vitamins-backend-test:
+    container_name: vitamins-backend-test
     build: ./
     dns:
       - 8.8.8.8
       - 8.8.4.4
     ports:
-      - "8000:8000"
+      - "8002:8000"
     restart: always
     entrypoint: /entrypoint.sh
     volumes:
       - ./:/vitamins-backend
-      - static_volume:/vitamins-backend/staticfiles
+      - static_volume_test:/vitamins-backend/staticfiles
     depends_on:
-      - vitamins-db
+      - vitamins-db-test
     environment:
       - TZ=Asia/Bishkek
     networks:
-      - vitamins_network
+      - vitamins_network_test
 
-  telegram-bot:
-    container_name: telegram-bot
+  telegram-bot-test:
+    container_name: telegram-bot-test
     build: ./
     ports:
-      - "8001:8001"
+      - "8003:8001"
     restart: always
     entrypoint: /entrypoint_bot.sh
     volumes:
       - ./:/telegram-bot
     depends_on:
-      - vitamins-db
+      - vitamins-db-test
     environment:
       - TZ=Asia/Bishkek
     networks:
-      - vitamins_network
+      - vitamins_network_test
 
-  vitamins-db:
-    container_name: vitamins-db
+  vitamins-db-test:
+    container_name: vitamins-db-test
     image: postgres:latest
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data/
+      - pgdata_test:/var/lib/postgresql/data/
     env_file: .env
     networks:
-      - vitamins_network
+      - vitamins_network_test
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U vitamin_user -d vitamin_db"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  redis:
+  redis-test:
+    container_name: redis-test
     image: "redis:alpine"
     ports:
-      - "6379:6379"
+      - "6380:6379"
     networks:
-      - vitamins_network
+      - vitamins_network_test
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -66,9 +67,9 @@ services:
       retries: 5
 
 networks:
-  vitamins_network:
+  vitamins_network_test:
     driver: bridge
 
 volumes:
-  static_volume:
-  pgdata:
+  static_volume_test:
+  pgdata_test:
