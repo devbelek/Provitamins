@@ -3,10 +3,9 @@ version: "3.9"
 services:
   vitamins-backend-test:
     container_name: vitamins-backend-test
-    build: ./
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
+    build:
+      context: .
+      network: host
     ports:
       - "8002:8000"
     restart: always
@@ -16,27 +15,8 @@ services:
       - static_volume_test:/vitamins-backend/staticfiles
     depends_on:
       - vitamins-db-test
-    command: ["healthy-check.sh", "vitamins-db-test:5432"]
     environment:
       - TZ=Asia/Bishkek
-    network_mode: "host"
-
-  # Временно закомментируем telegram-bot
-  # telegram-bot-test:
-  #   container_name: telegram-bot-test
-  #   build: ./
-  #   ports:
-  #     - "8003:8001"
-  #   restart: always
-  #   entrypoint: /entrypoint_bot.sh
-  #   volumes:
-  #     - ./:/telegram-bot
-  #   depends_on:
-  #     - vitamins-db-test
-  #   command: ["healthy-check.sh", "vitamins-db-test:5432"]
-  #   environment:
-  #     - TZ=Asia/Bishkek
-  #   network_mode: "host"
 
   vitamins-db-test:
     container_name: vitamins-db-test
@@ -46,12 +26,6 @@ services:
     volumes:
       - pgdata_test:/var/lib/postgresql/data/
     env_file: .env
-
-  redis-test:
-    container_name: redis-test
-    image: "redis:alpine"
-    ports:
-      - "6380:6379"
 
 volumes:
   static_volume_test:
