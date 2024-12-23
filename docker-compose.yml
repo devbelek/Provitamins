@@ -6,6 +6,12 @@ services:
     build:
       context: .
       network: host
+    extra_hosts:
+      - "pypi.org:151.101.1.63"
+      - "files.pythonhosted.org:151.101.1.63"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     ports:
       - "8002:8000"
     restart: always
