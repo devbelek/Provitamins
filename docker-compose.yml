@@ -25,28 +25,28 @@ services:
     networks:
       - vitamins_network_test
 
-  telegram-bot-test:
-    container_name: telegram-bot-test
-    build:
-      context: .
-      args:
-        - HTTP_PROXY=http://8.8.8.8:53
-        - HTTPS_PROXY=http://8.8.8.8:53
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
-    ports:
-      - "8003:8001"
-    restart: always
-    entrypoint: /entrypoint_bot.sh
-    volumes:
-      - ./:/telegram-bot
-    depends_on:
-      - vitamins-db-test
-    environment:
-      - TZ=Asia/Bishkek
-    networks:
-      - vitamins_network_test
+#  telegram-bot-test:
+#    container_name: telegram-bot-test
+#    build:
+#      context: .
+#      args:
+#        - HTTP_PROXY=http://8.8.8.8:53
+#        - HTTPS_PROXY=http://8.8.8.8:53
+#    dns:
+#      - 8.8.8.8
+#      - 8.8.4.4
+#    ports:
+#      - "8003:8001"
+#    restart: always
+#    entrypoint: /entrypoint_bot.sh
+#    volumes:
+#      - ./:/telegram-bot
+#    depends_on:
+#      - vitamins-db-test
+#    environment:
+#      - TZ=Asia/Bishkek
+#    networks:
+#      - vitamins_network_test
 
   vitamins-db-test:
     container_name: vitamins-db-test
