@@ -63,6 +63,20 @@ services:
       timeout: 5s
       retries: 5
 
+  nginx-test:
+    container_name: nginx-test
+    image: nginx:latest
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - static_volume_test:/vitamins-backend/staticfiles
+      - ./media:/vitamins-backend/media
+    depends_on:
+      - vitamins-backend-test
+    networks:
+      - vitamins_network_test
+
 networks:
   vitamins_network_test:
     driver: bridge
