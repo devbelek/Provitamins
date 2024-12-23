@@ -3,11 +3,7 @@ version: "3.9"
 services:
   vitamins-backend-test:
     container_name: vitamins-backend-test
-    build:
-      context: .
-      args:
-        - HTTP_PROXY=http://8.8.8.8:53
-        - HTTPS_PROXY=http://8.8.8.8:53
+    build: ./
     dns:
       - 8.8.8.8
       - 8.8.4.4
@@ -20,33 +16,27 @@ services:
       - static_volume_test:/vitamins-backend/staticfiles
     depends_on:
       - vitamins-db-test
+    command: ["healthy-check.sh", "vitamins-db-test:5432"]
     environment:
       - TZ=Asia/Bishkek
-    networks:
-      - vitamins_network_test
+    network_mode: "host"
 
-#  telegram-bot-test:
-#    container_name: telegram-bot-test
-#    build:
-#      context: .
-#      args:
-#        - HTTP_PROXY=http://8.8.8.8:53
-#        - HTTPS_PROXY=http://8.8.8.8:53
-#    dns:
-#      - 8.8.8.8
-#      - 8.8.4.4
-#    ports:
-#      - "8003:8001"
-#    restart: always
-#    entrypoint: /entrypoint_bot.sh
-#    volumes:
-#      - ./:/telegram-bot
-#    depends_on:
-#      - vitamins-db-test
-#    environment:
-#      - TZ=Asia/Bishkek
-#    networks:
-#      - vitamins_network_test
+  # Временно закомментируем telegram-bot
+  # telegram-bot-test:
+  #   container_name: telegram-bot-test
+  #   build: ./
+  #   ports:
+  #     - "8003:8001"
+  #   restart: always
+  #   entrypoint: /entrypoint_bot.sh
+  #   volumes:
+  #     - ./:/telegram-bot
+  #   depends_on:
+  #     - vitamins-db-test
+  #   command: ["healthy-check.sh", "vitamins-db-test:5432"]
+  #   environment:
+  #     - TZ=Asia/Bishkek
+  #   network_mode: "host"
 
   vitamins-db-test:
     container_name: vitamins-db-test
@@ -56,44 +46,12 @@ services:
     volumes:
       - pgdata_test:/var/lib/postgresql/data/
     env_file: .env
-    networks:
-      - vitamins_network_test
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U vitamin_user -d vitamin_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   redis-test:
     container_name: redis-test
     image: "redis:alpine"
     ports:
       - "6380:6379"
-    networks:
-      - vitamins_network_test
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  nginx-test:
-    container_name: nginx-test
-    image: nginx:latest
-    ports:
-      - "8080:80"
-    volumes:
-      - ./nginx:/etc/nginx/conf.d
-      - static_volume_test:/vitamins-backend/staticfiles
-      - ./media:/vitamins-backend/media
-    depends_on:
-      - vitamins-backend-test
-    networks:
-      - vitamins_network_test
-
-networks:
-  vitamins_network_test:
-    driver: bridge
 
 volumes:
   static_volume_test:
