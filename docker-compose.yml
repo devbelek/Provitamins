@@ -68,6 +68,7 @@ services:
       - "5433:5432"  # Изменено с 5432 на 5433
     volumes:
       - pgdata:/var/lib/postgresql/data/
+      - ./vitamin_backup.sql:/docker-entrypoint-initdb.d/vitamin_backup.sql
     env_file: .env
 
   redis:
