@@ -3,7 +3,14 @@ version: "3.9"
 services:
   vitamins-backend-test:
     container_name: vitamins-backend-test
-    build: ./
+    build:
+      context: .
+      args:
+        - HTTP_PROXY=http://8.8.8.8:53
+        - HTTPS_PROXY=http://8.8.8.8:53
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     ports:
       - "8002:8000"
     restart: always
@@ -20,7 +27,14 @@ services:
 
   telegram-bot-test:
     container_name: telegram-bot-test
-    build: ./
+    build:
+      context: .
+      args:
+        - HTTP_PROXY=http://8.8.8.8:53
+        - HTTPS_PROXY=http://8.8.8.8:53
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     ports:
       - "8003:8001"
     restart: always
