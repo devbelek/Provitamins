@@ -7,31 +7,28 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Dockerfile
 ENV OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 
+# Настраиваем DNS
+RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
+    echo "nameserver 8.8.4.4" >> /etc/resolv.conf
+
 WORKDIR /vitamins-backend
 
 # Устанавливаем системные зависимости
 RUN apt-get update && apt-get install -y \
-    netcat-traditional \
-    postgresql-client \
+    netcat \
+    postgresql \
+    build-essential \
     python3-dev \
-    python3-pip \
-    python3-setuptools \
-    python3-wheel \
-    python3-cffi \
-    libcairo2 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libgdk-pixbuf2.0-0 \
-    libffi-dev \
-    shared-mime-info \
+    libpq-dev \
     libjpeg-dev \
     zlib1g-dev \
+    libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Обновляем pip
-RUN pip install --upgrade pip
+# Обновляем pip и устанавливаем базовые инструменты
+RUN pip install --upgrade pip wheel setuptools
 
-# Устанавливаем Pillow напрямую
+# Устанавливаем Pillow
 RUN pip install Pillow==10.3.0
 
 # Копируем локальный кэш пакетов и requirements.txt
