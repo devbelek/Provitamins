@@ -4,9 +4,6 @@ services:
   vitamins-backend-test:
     container_name: vitamins-backend-test
     build: ./
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
     ports:
       - "8002:8000"
     restart: always
