@@ -1,8 +1,19 @@
-version: "3.9"
-
 services:
-  vitamins-backend-test:
-    container_name: vitamins-backend-test
+  nginx:
+    container_name: nginx
+    build: ./nginx
+    ports:
+      - "80:80"
+    volumes:
+      - static_volume:/vitamins-backend/staticfiles
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - vitamins-backend
+      - telegram-bot
+    restart: always
+
+  vitamins-backend:
+    container_name: vitamins-backend
     build:
       context: .
       network: host
@@ -12,27 +23,54 @@ services:
     dns:
       - 8.8.8.8
       - 8.8.4.4
-    ports:
-      - "8002:8000"
+    expose:
+      - "8000"
     restart: always
     entrypoint: /entrypoint.sh
     volumes:
       - ./:/vitamins-backend
-      - static_volume_test:/vitamins-backend/staticfiles
+      - static_volume:/vitamins-backend/staticfiles
     depends_on:
-      - vitamins-db-test
+      - vitamins-db
+    command: ["healthy-check.sh", "vitamins-db:5432"]
     environment:
       - TZ=Asia/Bishkek
 
-  vitamins-db-test:
-    container_name: vitamins-db-test
+  telegram-bot:
+    container_name: telegram-bot
+    build:
+      context: .
+      network: host
+    extra_hosts:
+      - "pypi.org:151.101.1.63"
+      - "files.pythonhosted.org:151.101.1.63"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    expose:
+      - "8001"
+    restart: always
+    entrypoint: /entrypoint_bot.sh
+    volumes:
+      - ./:/telegram-bot
+    depends_on:
+      - vitamins-db
+    command: ["healthy-check.sh", "vitamins-db:5432"]
+    environment:
+      - TZ=Asia/Bishkek
+
+  vitamins-db:
+    container_name: vitamins-db
     image: postgres:latest
     ports:
-      - "5434:5432"
+      - "5432:5432"
     volumes:
-      - pgdata_test:/var/lib/postgresql/data/
+      - pgdata:/var/lib/postgresql/data/
     env_file: .env
 
+  redis:
+    image: "redis:alpine"
+
 volumes:
-  static_volume_test:
-  pgdata_test:
+  static_volume:
+  pgdata:
