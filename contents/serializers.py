@@ -7,7 +7,6 @@ from .models import Delivery, BannerImage, DenialOfResponsibility
 class BannerImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = BannerImage
-        exclude = ('banner',)
         fields = ('image', 'link')
 
 

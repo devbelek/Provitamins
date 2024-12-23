@@ -1,9 +1,30 @@
 from django.db import models
 from marketplace.models import Product
 
+from marketplace.models import Country, Brand, Form
+
 
 class Product1C(models.Model):
     """Модель для товаров, поступающих из 1С"""
+    brand = models.ForeignKey(
+        Brand,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Бренд'
+    )
+    manufacturer_country = models.ForeignKey(
+        Country,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Страна производитель'
+    )
+    form = models.ForeignKey(
+        Form,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Форма'
+    )
     name_en = models.CharField(
         max_length=255,
         verbose_name='Наименование (EN)',
