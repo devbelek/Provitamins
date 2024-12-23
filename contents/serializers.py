@@ -8,6 +8,7 @@ class BannerImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = BannerImage
         exclude = ('banner',)
+        fields = ('image', 'link')
 
 
 class BannerSerializer(serializers.ModelSerializer):

@@ -1,7 +1,6 @@
 version: "3.9"
 
 services:
-
   vitamins-backend:
     container_name: vitamins-backend
     build: ./
@@ -17,10 +16,10 @@ services:
       - static_volume:/vitamins-backend/staticfiles
     depends_on:
       - vitamins-db
-    command: ["healthy-check.sh", "vitamins-db:5432"]
     environment:
       - TZ=Asia/Bishkek
-    network_mode: "host"
+    networks:
+      - vitamins_network
 
   telegram-bot:
     container_name: telegram-bot
@@ -33,23 +32,42 @@ services:
       - ./:/telegram-bot
     depends_on:
       - vitamins-db
-    command: ["healthy-check.sh", "vitamins-db:5432"]
     environment:
       - TZ=Asia/Bishkek
-    network_mode: "host"
-
+    networks:
+      - vitamins_network
 
   vitamins-db:
     container_name: vitamins-db
     image: postgres:latest
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data/
     env_file: .env
+    networks:
+      - vitamins_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vitamin_user -d vitamin_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    networks:
+      - vitamins_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  vitamins_network:
+    driver: bridge
 
 volumes:
   static_volume:

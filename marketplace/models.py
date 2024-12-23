@@ -85,13 +85,26 @@ class Product(models.Model):
     """Модель товара"""
     class ProductStatus(models.TextChoices):
         in_stock = 'in_stock', 'В наличии'
-        coming_soon = 'coming_soon', 'Ожидается'
+        out_of_stock = 'out_of_stock', 'Нет в наличии'  # Исправляем значение с coming_soon
 
     categories = models.ManyToManyField(Category, verbose_name='Категории', related_name='products')
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE, verbose_name='Бренд', related_name='products')
     manufacturer_country = models.ForeignKey(Country, on_delete=models.CASCADE, verbose_name='Страна производитель', related_name='products')
     form = models.ForeignKey(Form, on_delete=models.CASCADE, verbose_name='Форма', related_name='products', blank=True, null=True)
 
+    similar_products = models.ManyToManyField(
+        'self',
+        verbose_name="Похожие товары",
+        symmetrical=True,
+        blank=True,
+        help_text="Товары с похожими характеристиками (например, тот же продукт с другим вкусом)"
+    )
+
+    # Добавляем новые поля
+    flavor = models.CharField(max_length=255, verbose_name='Вкус', blank=True, null=True)
+    dosage = models.CharField(max_length=255, verbose_name='Дозировка', blank=True, null=True)
+
+    # Остальные существующие поля
     name = models.CharField(max_length=255, verbose_name='Наименование товара')
     description = RichTextField(verbose_name='Описание товара')
     price = models.IntegerField(verbose_name='Цена')

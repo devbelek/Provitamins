@@ -20,6 +20,9 @@ class BannerImage(models.Model):
     banner = models.ForeignKey(Banner, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField("Изображение", upload_to="banners/")
 
+    #belek
+    link = models.URLField("Ссылка", blank=True, null=True)
+
     class Meta:
         verbose_name = "Изображение баннера"
         verbose_name_plural = "Изображения баннеров"
@@ -61,8 +64,13 @@ class Contact(models.Model):
     phone2 = PhoneNumberField("Телефон 2", max_length=300, blank=True, null=True)
     email = models.EmailField("Email", blank=True, null=True)
     address = models.CharField("Адрес", max_length=300, blank=True, null=True)
+
+    #belek
+    address_extra = models.CharField("Дополнительный адрес", max_length=300, blank=True, null=True)
+
     work_time = models.CharField("Время работы", max_length=300, blank=True, null=True)
-    instagram_image = models.ImageField("Изображение Instagram", upload_to="main_page/instagram/", blank=True, null=True)
+    instagram_image = models.ImageField("Изображение Instagram", upload_to="main_page/instagram/", blank=True,
+                                        null=True)
     instagram_link = models.URLField("Ссылка на Instagram", blank=True, null=True)
 
     class Meta:
@@ -75,11 +83,13 @@ class Contact(models.Model):
 
 class ContactSocialMedia(models.Model):
     """Модель социальных сетей"""
+
     class SocialMediaType(models.TextChoices):
         TELEGRAM = "telegram", "Telegram"
         INSTAGRAM = "instagram", "Instagram"
         TIKTOK = "tiktok", "TikTok"
         WHATSAPP = "whatsapp", "WhatsApp"
+
     contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name="socials")
     link = models.URLField("Ссылка")
     type = models.CharField("Тип", max_length=20, choices=SocialMediaType.choices, unique=True)

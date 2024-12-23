@@ -64,28 +64,38 @@ class ProductImageInline(admin.TabularInline):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin, DynamicArrayMixin):
     inlines = (ProductImageInline,)
+    filter_horizontal = ('similar_products',)
 
-    list_display = ('id', 'name', 'brand', 'manufacturer_country', 'form', 'price')
+    list_display = ('id', 'name', 'flavor', 'dosage', 'brand', 'price', 'status')
     list_display_links = ('id', 'name')
     list_filter = ('categories', 'brand', 'manufacturer_country', 'form', 'is_hit', 'is_sale', 'status', 'rating')
-    search_fields = ('name', 'description')
+    search_fields = ('name', 'description', 'flavor', 'dosage')
 
     fieldsets = (
-        (None, {
+        ('Основная информация', {
             'fields': (
-                'categories', 'brand', 'manufacturer_country', 'form', 'name', 'description', 'price', 'sale_price',
-                'status', 'rating', 'is_hit', 'is_sale', 'is_recommend', 'quantity', 'vendor_code',
-        )}),
-        ('СЕО ключевые слова', {
-            'fields': ('seo_keywords',)
+                'name', 'flavor', 'dosage', 'description',
+                'categories', 'brand', 'manufacturer_country', 'form'
+            )
+        }),
+        ('Цены и статусы', {
+            'fields': (
+                'price', 'sale_price', 'status',
+                'is_hit', 'is_sale', 'is_recommend'
+            )
+        }),
+        ('Дополнительно', {
+            'fields': (
+                'quantity', 'vendor_code', 'rating',
+                'similar_products', 'seo_keywords'
+            )
         })
     )
 
     def get_queryset(self, request):
-        queryset = super(ProductAdmin, self).get_queryset(request)
-        queryset = queryset.select_related('brand', 'manufacturer_country', 'form') \
-                           .prefetch_related('categories')
-        return queryset
+        return super().get_queryset(request).select_related(
+            'brand', 'manufacturer_country', 'form'
+        ).prefetch_related('categories', 'similar_products')
 
 
 @admin.register(ProductReview)
@@ -126,18 +136,16 @@ class OrderModeratorForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        print('cleaned', cleaned_data)
         username = cleaned_data.get('telegram_nick')
         telegram_user = TelegramUsername.objects.filter(username=username).first()
         if not telegram_user:
             raise forms.ValidationError('Не удалось получить telegram_id')
         self.cleaned_data['telegram_id'] = telegram_user.telegram_id
-        print('cleaned 2', cleaned_data)
         return cleaned_data
 
     def save(self, commit=True):
         moderator = super().save(commit=False)
-        telegram_user = TelegramUsername.objects. filter(username=moderator.telegram_nick).first()
+        telegram_user = TelegramUsername.objects.filter(username=moderator.telegram_nick).first()
         moderator.telegram_id = telegram_user.telegram_id
         if commit:
             moderator.save()

@@ -9,6 +9,7 @@ class BannerImageInline(admin.TabularInline):
     model = BannerImage
     extra = 1
     max_num = 5
+    fields = ('image', 'link')
 
 
 @admin.register(Banner)
@@ -23,7 +24,7 @@ class BannerAdmin(admin.ModelAdmin):
     def custom_description(self, obj):
         return "Баннер может иметь не более 5 изображений"
 
-    custom_description.short_description = 'Прмечание'
+    custom_description.short_description = 'Примечание'
 
     def has_add_permission(self, request):
         has_permission = super().has_add_permission(request)

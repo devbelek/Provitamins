@@ -52,10 +52,25 @@ class ProductSerializer(serializers.ModelSerializer):
     brand_name = serializers.CharField(source='brand.name', read_only=True)
     form_name = serializers.CharField(source='form.name', read_only=True, allow_blank=True, allow_null=True)
     country_name = serializers.CharField(source='manufacturer_country.name', read_only=True)
+    similar_products = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = '__all__'
+
+    def get_similar_products(self, obj):
+        """Получение информации о похожих товарах"""
+        return [{
+            'id': product.id,
+            'name': product.name,
+            'flavor': product.flavor,
+            'dosage': product.dosage,
+            'price': product.price,
+            'sale_price': product.sale_price,
+            'current_price': product.current_price,
+            'status': product.status,
+            'images': ProductImageSerializer(product.images.all(), many=True).data
+        } for product in obj.similar_products.all()]
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
