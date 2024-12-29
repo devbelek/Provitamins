@@ -5,6 +5,16 @@ from ckeditor.fields import RichTextField
 from django_better_admin_arrayfield.models.fields import ArrayField
 
 
+class ProductImage1C(models.Model):
+    """Модель изображения товара из 1С"""
+    product = models.ForeignKey('Product1C', on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='product_images_1c', verbose_name='Изображение товара')
+
+    class Meta:
+        verbose_name = 'Изображение товара'
+        verbose_name_plural = 'Изображения товаров'
+
+
 class Product1C(models.Model):
     """Модель для товаров, поступающих из 1С"""
     name_en = models.CharField(

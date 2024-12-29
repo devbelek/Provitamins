@@ -1,9 +1,15 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Product1C, SyncLog
+from .models import Product1C, SyncLog, ProductImage1C
 from marketplace.models import Product
 from django.contrib import messages
 from marketplace.admin import ProductImageInline
+
+
+class Product1CImageInline(admin.TabularInline):
+    model = ProductImage1C
+    extra = 0
+    max_num = 3
 
 
 class SyncLogInline(admin.TabularInline):
@@ -19,7 +25,7 @@ class SyncLogInline(admin.TabularInline):
 
 @admin.register(Product1C)
 class Product1CAdmin(admin.ModelAdmin):
-    inlines = (ProductImageInline,)
+    inlines = (Product1CImageInline, SyncLogInline)
 
     list_display = (
         'id', 'name_en', 'name', 'brand', 'manufacturer_country', 'form', 'price', 'status'
