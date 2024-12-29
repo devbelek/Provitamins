@@ -139,6 +139,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'available_variations': available_variations
         }
 
+
 class TreeCategorySerializer(serializers.ModelSerializer):
     children = serializers.SerializerMethodField(source="get_children")
 

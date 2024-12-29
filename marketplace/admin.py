@@ -68,13 +68,13 @@ class ProductAdmin(admin.ModelAdmin, DynamicArrayMixin):
 
     list_display = (
         'id', 'name_en', 'name', 'brand', 'manufacturer_country',
-        'form', 'price', 'is_variation', 'variation_type'
+        'form', 'price', 'is_variation'
     )
     list_display_links = ('id', 'name')
     list_filter = (
         'categories', 'brand', 'manufacturer_country', 'form',
         'is_hit', 'is_sale', 'status', 'rating',
-        'is_variation', 'variation_type'
+        'is_variation',
     )
 
     fieldsets = (
@@ -86,7 +86,7 @@ class ProductAdmin(admin.ModelAdmin, DynamicArrayMixin):
         }),
         ('Вариации', {
             'fields': (
-                'is_variation', 'variation_type', 'base_product',
+                'is_variation', 'base_product',
                 'flavor', 'dosage', 'quantity'
             ),
             'classes': ('collapse',),
