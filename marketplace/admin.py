@@ -68,13 +68,14 @@ class ProductAdmin(admin.ModelAdmin, DynamicArrayMixin):
     list_display = ('id', 'name', 'brand', 'manufacturer_country', 'form', 'price')
     list_display_links = ('id', 'name')
     list_filter = ('categories', 'brand', 'manufacturer_country', 'form', 'is_hit', 'is_sale', 'status', 'rating')
-    search_fields = ('name', 'description')
+    search_fields = ('name', 'description', 'flavor', 'dosage')
 
     fieldsets = (
         (None, {
             'fields': (
-                'categories', 'brand', 'manufacturer_country', 'form', 'name', 'description', 'price', 'sale_price',
-                'status', 'rating', 'is_hit', 'is_sale', 'is_recommend', 'quantity', 'vendor_code',
+                'categories', 'brand', 'manufacturer_country', 'form', 'name', 'flavor', 'dosage', 'description',
+                'price', 'sale_price', 'status', 'rating', 'is_hit', 'is_sale', 'is_recommend', 'quantity',
+                'vendor_code', 'similar_products',
         )}),
         ('СЕО ключевые слова', {
             'fields': ('seo_keywords',)
@@ -84,7 +85,7 @@ class ProductAdmin(admin.ModelAdmin, DynamicArrayMixin):
     def get_queryset(self, request):
         queryset = super(ProductAdmin, self).get_queryset(request)
         queryset = queryset.select_related('brand', 'manufacturer_country', 'form') \
-                           .prefetch_related('categories')
+                           .prefetch_related('categories', 'similar_products')
         return queryset
 
 
