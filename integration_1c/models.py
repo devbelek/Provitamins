@@ -1,25 +1,16 @@
 from django.db import models
-from marketplace.models import Product
-from django.core.validators import MinValueValidator, MaxValueValidator
-from django.db import models
-from django_better_admin_arrayfield.models.fields import ArrayField
-from mptt.models import MPTTModel
-from ckeditor.fields import RichTextField
-from phonenumber_field.modelfields import PhoneNumberField
-from marketplace.models import Country, Brand, Form, Category
+from marketplace.models import Product, Brand, Country, Form, Category
 from django.utils.html import format_html
+from ckeditor.fields import RichTextField
+from django_better_admin_arrayfield.models.fields import ArrayField
 
 
 class Product1C(models.Model):
-    STATUS_CHOICES = [
-        ('in_stock', 'В наличии'),
-        ('out_of_stock', 'Нет в наличии')
-    ]
-
+    """Модель для товаров, поступающих из 1С"""
     name_en = models.CharField(
         max_length=255,
         verbose_name='Наименование (EN)',
-        editable=False  # Неизменяемое поле
+        editable=False
     )
     name = models.CharField(
         max_length=255,
@@ -29,45 +20,121 @@ class Product1C(models.Model):
     )
     vendor_code = models.CharField(
         max_length=255,
-        verbose_name='Артикул'
+        verbose_name='Артикул',
+        unique=True
     )
     price = models.IntegerField(
         verbose_name='Цена'
     )
     status = models.CharField(
         max_length=20,
-        choices=STATUS_CHOICES,
-        default='out_of_stock',
-        verbose_name='Статус'
+        choices=Product.ProductStatus.choices,
+        default=Product.ProductStatus.out_of_stock,
+        verbose_name='Статус товара'
     )
+
+    # Поля из основной модели Product
+    brand = models.ForeignKey(
+        Brand,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Бренд'
+    )
+    manufacturer_country = models.ForeignKey(
+        Country,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Страна производитель'
+    )
+    form = models.ForeignKey(
+        Form,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Форма'
+    )
+    description = RichTextField(
+        verbose_name='Описание товара',
+        blank=True,
+        null=True
+    )
+    categories = models.ManyToManyField(
+        'marketplace.Category',  # Исправляем ссылку на модель Category
+        verbose_name='Категории',
+        blank=True
+    )
+    flavor = models.CharField(
+        max_length=255,
+        verbose_name='Вкус',
+        blank=True,
+        null=True
+    )
+    dosage = models.CharField(
+        max_length=255,
+        verbose_name='Дозировка',
+        blank=True,
+        null=True
+    )
+    sale_price = models.IntegerField(
+        verbose_name='Цена со скидкой',
+        blank=True,
+        null=True
+    )
+    is_hit = models.BooleanField(
+        default=False,
+        verbose_name='Хит'
+    )
+    is_sale = models.BooleanField(
+        default=False,
+        verbose_name='Акция'
+    )
+    is_recommend = models.BooleanField(
+        default=False,
+        verbose_name='Рекомендуемый'
+    )
+    quantity = models.CharField(
+        max_length=255,
+        verbose_name='Количество в упаковке',
+        blank=True,
+        null=True
+    )
+    rating = models.IntegerField(
+        verbose_name='Рейтинг',
+        blank=True,
+        null=True
+    )
+    seo_keywords = ArrayField(
+        models.CharField(max_length=255),
+        verbose_name='Ключевые слова',
+        blank=True,
+        null=True
+    )
+
     is_published = models.BooleanField(
         default=False,
         verbose_name='Опубликовать товар'
     )
-
-    # Остальные поля из Product для заполнения перед публикацией
-    brand = models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True, blank=True)
-    manufacturer_country = models.ForeignKey(Country, on_delete=models.SET_NULL, null=True, blank=True)
-    form = models.ForeignKey(Form, on_delete=models.SET_NULL, null=True, blank=True)
-    description = RichTextField(blank=True, null=True)
-    categories = models.ManyToManyField('Category', blank=True)
-    flavor = models.CharField(max_length=255, blank=True, null=True)
-    dosage = models.CharField(max_length=255, blank=True, null=True)
-    sale_price = models.IntegerField(blank=True, null=True)
-    is_hit = models.BooleanField(default=False)
-    is_sale = models.BooleanField(default=False)
-    is_recommend = models.BooleanField(default=False)
-    quantity = models.CharField(max_length=255, blank=True, null=True)
-    rating = models.IntegerField(blank=True, null=True)
-    seo_keywords = ArrayField(models.CharField(max_length=255), blank=True, null=True)
-
     published_product = models.OneToOneField(
-        'marketplace.Product',
+        Product,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         verbose_name='Опубликованный товар'
     )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+
+    class Meta:
+        verbose_name = 'Товар из 1С'
+        verbose_name_plural = 'Товары из 1С'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name_en} ({self.vendor_code})"
 
 
 class SyncLog(models.Model):
