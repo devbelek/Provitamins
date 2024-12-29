@@ -4,6 +4,8 @@ from .models import Product1C, SyncLog
 from marketplace.models import Product
 from django.contrib import messages
 
+from ..marketplace.admin import ProductImageInline
+
 
 class SyncLogInline(admin.TabularInline):
     model = SyncLog
@@ -18,44 +20,47 @@ class SyncLogInline(admin.TabularInline):
 
 @admin.register(Product1C)
 class Product1CAdmin(admin.ModelAdmin):
+    inlines = (ProductImageInline,)
+
     list_display = (
-        'id', 'name_en', 'name', 'vendor_code',
-        'price', 'status', 'is_published',
-        'published_status', 'created_at'
+        'id', 'name_en', 'name', 'brand', 'manufacturer_country', 'form', 'price', 'status'
     )
-    list_editable = ('name', 'price', 'status', 'is_published')
-    list_filter = ('status', 'is_published', 'created_at')
-    search_fields = ('name_en', 'name', 'vendor_code')
-    readonly_fields = ('name_en', 'published_status', 'created_at')
-    inlines = [SyncLogInline]
+    list_display_links = ('id', 'name')
+    list_filter = (
+        'categories', 'brand', 'manufacturer_country', 'form',
+        'is_hit', 'is_sale', 'status', 'rating', 'is_published'
+    )
+    search_fields = ('name', 'name_en', 'description', 'flavor', 'dosage', 'vendor_code')
 
     fieldsets = (
-        ('Информация из 1С (неизменяемая)', {
-            'fields': ('name_en', 'created_at'),
-            'classes': ('collapse',)
-        }),
         ('Основная информация', {
             'fields': (
-                'name', 'vendor_code', 'price', 'status',
-                ('brand', 'manufacturer_country'),  # Группируем обязательные поля
-                'form',
-                'categories', 'description', 'flavor', 'dosage'
+                'categories', 'brand', 'manufacturer_country', 'form',
+                'name_en', 'name', 'flavor', 'dosage', 'description'
             )
         }),
         ('Цены и статусы', {
             'fields': (
-                'sale_price', 'is_hit', 'is_sale', 'is_recommend',
-                'quantity', 'rating'
+                'price', 'sale_price', 'status',
+                'is_hit', 'is_sale', 'is_recommend',
+                'quantity', 'rating', 'vendor_code'
             )
         }),
-        ('SEO', {
+        ('СЕО ключевые слова', {
             'fields': ('seo_keywords',),
             'classes': ('collapse',)
         }),
         ('Публикация', {
-            'fields': ('is_published', 'published_status')
+            'fields': ('is_published', 'published_status'),
         })
     )
+
+    readonly_fields = ('published_status',)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'brand', 'manufacturer_country', 'form'
+        ).prefetch_related('categories')
 
     def published_status(self, obj):
         # Проверяем существование товара в основном каталоге
