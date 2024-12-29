@@ -5,6 +5,17 @@ from .models import Category, Catalogue, Brand, Country, Form, Product, ProductI
 from marketplace.services.telegram import bot
 
 
+class ProductVariationSerializer(serializers.ModelSerializer):
+    in_stock = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = ('id', 'flavor', 'dosage', 'quantity', 'in_stock', 'product_id')
+
+    def get_in_stock(self, obj):
+        return obj.status == Product.ProductStatus.in_stock
+
+
 class CatalogueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Catalogue
@@ -53,7 +64,8 @@ class ProductSerializer(serializers.ModelSerializer):
     form_name = serializers.CharField(source='form.name', read_only=True, allow_blank=True, allow_null=True)
     country_name = serializers.CharField(source='manufacturer_country.name', read_only=True)
     similar_products = serializers.SerializerMethodField()
-    name_en = serializers.CharField(allow_blank=True, allow_null=True)  # Добавляем поле name_en
+    name_en = serializers.CharField(allow_blank=True, allow_null=True)
+    variations = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -99,6 +111,55 @@ class ProductSerializer(serializers.ModelSerializer):
                         data['catalogue_name'] = catalogue.name
                         data['catalogue_id'] = catalogue.id
         return data
+
+    def get_variations(self, obj):
+        similar_products = obj.similar_products.all()
+
+        variations = {
+            'current': {
+                'id': obj.id,
+                'flavor': obj.flavor,
+                'dosage': obj.dosage,
+                'quantity': obj.quantity,
+                'in_stock': obj.status == Product.ProductStatus.in_stock,
+                'product_id': obj.id
+            },
+            'flavors': [],
+            'dosages': [],
+            'quantities': []
+        }
+
+        # Группируем по вкусам
+        flavors = similar_products.filter(flavor__isnull=False).distinct()
+        if flavors.exists():
+            variations['flavors'] = [{
+                'id': prod.id,
+                'flavor': prod.flavor,
+                'in_stock': prod.status == Product.ProductStatus.in_stock,
+                'product_id': prod.id
+            } for prod in flavors]
+
+        # Группируем по дозировкам
+        dosages = similar_products.filter(dosage__isnull=False).distinct()
+        if dosages.exists():
+            variations['dosages'] = [{
+                'id': prod.id,
+                'dosage': prod.dosage,
+                'in_stock': prod.status == Product.ProductStatus.in_stock,
+                'product_id': prod.id
+            } for prod in dosages]
+
+        # Группируем по количеству
+        quantities = similar_products.filter(quantity__isnull=False).distinct()
+        if quantities.exists():
+            variations['quantities'] = [{
+                'id': prod.id,
+                'quantity': prod.quantity,
+                'in_stock': prod.status == Product.ProductStatus.in_stock,
+                'product_id': prod.id
+            } for prod in quantities]
+
+        return variations
 
 
 class TreeCategorySerializer(serializers.ModelSerializer):

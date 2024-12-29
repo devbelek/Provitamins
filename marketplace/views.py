@@ -86,6 +86,55 @@ class ProductViewSet(ReadOnlyModelViewSet):
             return paginator.get_paginated_response(serializer.data)
         return Response(serializer.data, status=200)
 
+    @action(detail=True, methods=['get'])
+    def variations(self, request, pk=None):
+        instance = self.get_object()
+        similar_products = instance.similar_products.all()
+
+        variations = {
+            'current': {
+                'id': instance.id,
+                'flavor': instance.flavor,
+                'dosage': instance.dosage,
+                'quantity': instance.quantity,
+                'in_stock': instance.status == Product.ProductStatus.in_stock,
+                'product_id': instance.id
+            },
+            'flavors': [],
+            'dosages': [],
+            'quantities': []
+        }
+
+        # Группируем все вариации
+        flavors = similar_products.filter(flavor__isnull=False).distinct()
+        if flavors.exists():
+            variations['flavors'] = [{
+                'id': prod.id,
+                'flavor': prod.flavor,
+                'in_stock': prod.status == Product.ProductStatus.in_stock,
+                'product_id': prod.id
+            } for prod in flavors]
+
+        dosages = similar_products.filter(dosage__isnull=False).distinct()
+        if dosages.exists():
+            variations['dosages'] = [{
+                'id': prod.id,
+                'dosage': prod.dosage,
+                'in_stock': prod.status == Product.ProductStatus.in_stock,
+                'product_id': prod.id
+            } for prod in dosages]
+
+        quantities = similar_products.filter(quantity__isnull=False).distinct()
+        if quantities.exists():
+            variations['quantities'] = [{
+                'id': prod.id,
+                'quantity': prod.quantity,
+                'in_stock': prod.status == Product.ProductStatus.in_stock,
+                'product_id': prod.id
+            } for prod in quantities]
+
+        return Response(variations)
+
     @extend_schema(
         parameters=[
             OpenApiParameter(name='sub_category_id', description='Sub category ID', required=False, type={'type': 'integer'}),
