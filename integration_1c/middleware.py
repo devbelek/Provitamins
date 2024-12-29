@@ -8,7 +8,9 @@ class Basic1CAuthMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        print("DEBUG: Request path:", request.path)  # Для отладки
+        print("DEBUG: Request path:", request.path)
+        print("DEBUG: Expected username:", settings.ONE_C_USERNAME)
+        print("DEBUG: Expected password:", settings.ONE_C_PASSWORD)
         if request.path.startswith('/api/1c/'):
-            return self.get_response(request)  # Временно пропускаем все запросы
+            return self.get_response(request)
         return self.get_response(request)
