@@ -28,14 +28,30 @@ class Product1CAdmin(admin.ModelAdmin):
     inlines = (SyncLogInline,)
 
     list_display = (
-        'id', 'name_en', 'name', 'brand', 'manufacturer_country', 'form', 'price', 'status'
+        'id', 'name_en', 'name', 'brand', 'manufacturer_country',
+        'form', 'price', 'sale_price', 'status', 'published_product'
     )
-    list_display_links = ('id', 'name')
-    list_filter = (
-        'categories', 'brand', 'manufacturer_country', 'form',
-        'is_hit', 'is_sale', 'status', 'rating', 'is_published'
+    list_display_links = ('id', 'name', 'name_en')
+    list_editable = ('price', 'sale_price', 'status', 'published_product')
+
+    list_filter = [
+        ('published_product', admin.BooleanFieldListFilter),
+        ('brand', admin.RelatedFieldListFilter),
+        ('manufacturer_country', admin.RelatedFieldListFilter),
+        ('form', admin.RelatedFieldListFilter),
+        ('categories', admin.RelatedFieldListFilter),
+        ('status', admin.ChoicesFieldListFilter),
+        ('is_hit', admin.BooleanFieldListFilter),
+        ('is_sale', admin.BooleanFieldListFilter),
+        ('is_recommend', admin.BooleanFieldListFilter),
+        ('created_at', admin.DateFieldListFilter),
+    ]
+
+    search_fields = (
+        'name', 'name_en', 'description',
+        'flavor', 'dosage', 'vendor_code',
+        'brand__name', 'manufacturer_country__name'
     )
-    search_fields = ('name', 'name_en', 'description', 'flavor', 'dosage', 'vendor_code')
 
     fieldsets = (
         ('Основная информация', {
@@ -43,36 +59,39 @@ class Product1CAdmin(admin.ModelAdmin):
                 'categories',
                 ('brand', 'manufacturer_country'),
                 'form',
-                'name_en',
-                'name',
-                'flavor',
-                'dosage',
+                ('name_en', 'name'),
+                ('flavor', 'dosage'),
                 'description',
-                'price',
-                'sale_price',
+                ('price', 'sale_price'),
                 'status',
-                'is_hit',
-                'is_sale',
-                'is_recommend',
                 'quantity',
-                'rating',
-                'vendor_code',
-                'similar_products',
-                'is_published',
+                'vendor_code'
             )
         }),
-        ('СЕО ключевые слова', {
-            'fields': ('seo_keywords',),
+        ('Дополнительные настройки', {
+            'fields': (
+                'similar_products',
+                ('is_hit', 'is_sale', 'is_recommend'),
+                'rating',
+            ),
+            'classes': ('collapse',)
+        }),
+        ('СЕО и публикация', {
+            'fields': (
+                'seo_keywords',
+                'published_product',
+            ),
             'classes': ('collapse',)
         }),
     )
 
-    readonly_fields = ('published_status',)
+    filter_horizontal = ('categories', 'similar_products')
+    save_on_top = True
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
             'brand', 'manufacturer_country', 'form'
-        ).prefetch_related('categories')
+        ).prefetch_related('categories', 'similar_products')
 
     def published_status(self, obj):
         # Проверяем существование товара в основном каталоге
