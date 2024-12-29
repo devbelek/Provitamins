@@ -36,9 +36,11 @@ class Product1CAdmin(admin.ModelAdmin):
         ('Основная информация', {
             'fields': (
                 'name', 'vendor_code', 'price', 'status',
-                'categories', 'brand', 'manufacturer_country', 'form',
-                'description', 'flavor', 'dosage'
+                ('brand', 'manufacturer_country'),
+                'form',
+                'categories', 'description', 'flavor', 'dosage'
             )
+        }),
         }),
         ('Цены и статусы', {
             'fields': (
@@ -72,41 +74,69 @@ class Product1CAdmin(admin.ModelAdmin):
     def publish_products(self, request, queryset):
         for product in queryset:
             if not product.is_published:
-                # Создаем новый товар в основном каталоге
-                new_product = Product.objects.create(
-                    name=product.name or product.name_en,
-                    vendor_code=product.vendor_code,
-                    price=product.price,
-                    status=product.status,
-                    description=product.description or "",
-                    brand=product.brand,
-                    manufacturer_country=product.manufacturer_country,
-                    form=product.form,
-                    flavor=product.flavor,
-                    dosage=product.dosage,
-                    sale_price=product.sale_price,
-                    is_hit=product.is_hit,
-                    is_sale=product.is_sale,
-                    is_recommend=product.is_recommend,
-                    quantity=product.quantity or "1",
-                    rating=product.rating,
-                    seo_keywords=product.seo_keywords
-                )
+                # Проверяем наличие обязательных полей
+                if not all([product.brand, product.manufacturer_country]):
+                    self.message_user(
+                        request,
+                        f'Товар {product.name_en} не может быть опубликован. '
+                        f'Заполните обязательные поля (Бренд, Страна производитель)',
+                        level='ERROR'
+                    )
+                    continue
 
-                # Добавляем категории если есть
-                if hasattr(product, 'categories'):
-                    new_product.categories.set(product.categories.all())
+                # Проверяем описание
+                if not product.description:
+                    product.description = ""  # Устанавливаем пустую строку если нет описания
 
-                # Логируем публикацию
-                SyncLog.objects.create(
-                    product_1c=product,
-                    sync_type='publish',
-                    status=True,
-                    message='Товар успешно опубликован в основном каталоге'
-                )
+                try:
+                    # Создаем новый товар в основном каталоге
+                    new_product = Product.objects.create(
+                        name=product.name or product.name_en,
+                        vendor_code=product.vendor_code,
+                        price=product.price,
+                        status=product.status,
+                        description=product.description,
+                        brand=product.brand,
+                        manufacturer_country=product.manufacturer_country,
+                        form=product.form,
+                        flavor=product.flavor,
+                        dosage=product.dosage,
+                        sale_price=product.sale_price,
+                        is_hit=product.is_hit,
+                        is_sale=product.is_sale,
+                        is_recommend=product.is_recommend,
+                        quantity=product.quantity or "1",
+                        rating=product.rating,
+                        seo_keywords=product.seo_keywords
+                    )
 
-                # Удаляем товар из 1С
-                product.delete()
+                    # Добавляем категории если есть
+                    if hasattr(product, 'categories'):
+                        new_product.categories.set(product.categories.all())
+
+                    # Логируем публикацию
+                    SyncLog.objects.create(
+                        product_1c=product,
+                        sync_type='publish',
+                        status=True,
+                        message='Товар успешно опубликован в основном каталоге'
+                    )
+
+                    # Удаляем товар из 1С
+                    product.delete()
+
+                    self.message_user(
+                        request,
+                        f'Товар {product.name_en} успешно опубликован',
+                        level='SUCCESS'
+                    )
+
+                except Exception as e:
+                    self.message_user(
+                        request,
+                        f'Ошибка при публикации товара {product.name_en}: {str(e)}',
+                        level='ERROR'
+                    )
 
     publish_products.short_description = 'Опубликовать выбранные товары'
 
@@ -129,7 +159,17 @@ class Product1CAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         if obj.is_published:
-            # Если установлен флаг публикации, публикуем товар
+            # Проверяем обязательные поля перед публикацией
+            if not all([obj.brand, obj.manufacturer_country]):
+                messages.error(
+                    request,
+                    'Невозможно опубликовать товар. Заполните обязательные поля (Бренд, Страна производитель)'
+                )
+                obj.is_published = False
+                super().save_model(request, obj, form, change)
+                return
+
+            # Если все проверки пройдены, публикуем товар
             self.publish_products(request, Product1C.objects.filter(pk=obj.pk))
         else:
             super().save_model(request, obj, form, change)
