@@ -6,7 +6,8 @@ from django_better_admin_arrayfield.models.fields import ArrayField
 from mptt.models import MPTTModel
 from ckeditor.fields import RichTextField
 from phonenumber_field.modelfields import PhoneNumberField
-from marketplace.models import Country, Brand, Form
+from marketplace.models import Country, Brand, Form, Category
+from django.utils.html import format_html
 
 
 class Product1C(models.Model):
