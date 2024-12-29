@@ -25,7 +25,7 @@ class SyncLogInline(admin.TabularInline):
 
 @admin.register(Product1C)
 class Product1CAdmin(admin.ModelAdmin):
-    inlines = (Product1CImageInline, SyncLogInline)
+    inlines = (SyncLogInline,)
 
     list_display = (
         'id', 'name_en', 'name', 'brand', 'manufacturer_country', 'form', 'price', 'status'
@@ -40,24 +40,31 @@ class Product1CAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Основная информация', {
             'fields': (
-                'categories', 'brand', 'manufacturer_country', 'form',
-                'name_en', 'name', 'flavor', 'dosage', 'description'
-            )
-        }),
-        ('Цены и статусы', {
-            'fields': (
-                'price', 'sale_price', 'status',
-                'is_hit', 'is_sale', 'is_recommend',
-                'quantity', 'rating', 'vendor_code'
+                'categories',
+                ('brand', 'manufacturer_country'),
+                'form',
+                'name_en',
+                'name',
+                'flavor',
+                'dosage',
+                'description',
+                'price',
+                'sale_price',
+                'status',
+                'is_hit',
+                'is_sale',
+                'is_recommend',
+                'quantity',
+                'rating',
+                'vendor_code',
+                'similar_products',
+                'is_published',
             )
         }),
         ('СЕО ключевые слова', {
             'fields': ('seo_keywords',),
             'classes': ('collapse',)
         }),
-        ('Публикация', {
-            'fields': ('is_published', 'published_status'),
-        })
     )
 
     readonly_fields = ('published_status',)
