@@ -110,6 +110,7 @@ class Product(models.Model):
     flavorArray = models.URLField(blank=True, null=True)
     dosageArray = models.URLField(blank=True, null=True)
 
+    name_en = models.CharField(max_length=255, verbose_name='Наименование (EN)', blank=True, null=True)
     name = models.CharField(max_length=255, verbose_name='Наименование товара')
     description = RichTextField(verbose_name='Описание товара')
     price = models.IntegerField(verbose_name='Цена')

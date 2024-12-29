@@ -7,25 +7,24 @@ from .models import Product1C
 
 
 class Product1CView(APIView):
-    permission_classes = [AllowAny]  # Добавляем это
-    authentication_classes = []  # И это
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
     def post(self, request):
-        print("DEBUG: Request headers:", request.META)  # Добавляем для отладки
         vendor_code = request.data.get('vendor_code')
         instance = Product1C.objects.filter(vendor_code=vendor_code).first()
+        main_product = Product.objects.filter(vendor_code=vendor_code).first()
 
-        if instance:
-            serializer = Product1CSerializer(instance, data=request.data, partial=True)
-        else:
-            serializer = Product1CSerializer(data=request.data)
+        # Создаем или обновляем с помощью сериализатора
+        serializer = Product1CSerializer(instance, data=request.data, partial=True) if instance else Product1CSerializer(data=request.data)
 
         if serializer.is_valid():
-            product = serializer.save()
+            serializer.save()
+            message = 'Товар успешно обновлен' if main_product else 'Товар успешно создан'
             return Response({
                 'status': 'success',
-                'message': 'Товар успешно обновлен' if instance else 'Товар успешно создан',
-                'product_id': product.id
+                'message': message,
+                'product_id': main_product.id if main_product else None
             }, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -65,7 +65,7 @@ class ProductImageInline(admin.TabularInline):
 class ProductAdmin(admin.ModelAdmin, DynamicArrayMixin):
     inlines = (ProductImageInline,)
 
-    list_display = ('id', 'name', 'brand', 'manufacturer_country', 'form', 'price')
+    list_display = ('id', 'name_en', 'name', 'brand', 'manufacturer_country', 'form', 'price')
     list_display_links = ('id', 'name')
     list_filter = ('categories', 'brand', 'manufacturer_country', 'form', 'is_hit', 'is_sale', 'status', 'rating')
     search_fields = ('name', 'description', 'flavor', 'dosage')
@@ -73,7 +73,7 @@ class ProductAdmin(admin.ModelAdmin, DynamicArrayMixin):
     fieldsets = (
         (None, {
             'fields': (
-                'categories', 'brand', 'manufacturer_country', 'form', 'name', 'flavor', 'dosage', 'description',
+                'categories', 'brand', 'manufacturer_country', 'form', 'name_en', 'name', 'flavor', 'dosage', 'description',
                 'price', 'sale_price', 'status', 'rating', 'is_hit', 'is_sale', 'is_recommend', 'quantity',
                 'vendor_code', 'similar_products',
         )}),

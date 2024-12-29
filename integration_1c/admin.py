@@ -4,6 +4,7 @@ from .models import Product1C, SyncLog
 from marketplace.models import Product
 from django.contrib import messages
 
+
 class SyncLogInline(admin.TabularInline):
     model = SyncLog
     extra = 0
