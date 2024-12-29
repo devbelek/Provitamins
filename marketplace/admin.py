@@ -64,11 +64,14 @@ class ProductImageInline(admin.TabularInline):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin, DynamicArrayMixin):
     inlines = (ProductImageInline,)
+    filter_horizontal = ('similar_products',)
 
-    list_display = ('id', 'name_en', 'name', 'brand', 'manufacturer_country', 'form', 'price')
+    list_display = ('id', 'name_en', 'name', 'brand', 'manufacturer_country',
+                    'form', 'price', 'flavor', 'dosage', 'quantity')
     list_display_links = ('id', 'name')
-    list_filter = ('categories', 'brand', 'manufacturer_country', 'form', 'is_hit', 'is_sale', 'status', 'rating')
-    search_fields = ('name', 'description', 'flavor', 'dosage')
+    list_filter = ('categories', 'brand', 'manufacturer_country', 'form',
+                   'is_hit', 'is_sale', 'status', 'rating', 'flavor', 'dosage')
+    search_fields = ('name', 'description', 'flavor', 'dosage', 'quantity')
 
     fieldsets = (
         (None, {
@@ -77,6 +80,11 @@ class ProductAdmin(admin.ModelAdmin, DynamicArrayMixin):
                 'price', 'sale_price', 'status', 'rating', 'is_hit', 'is_sale', 'is_recommend', 'quantity',
                 'vendor_code', 'similar_products',
         )}),
+        ('Вариации', {
+            'fields': (
+                'flavor', 'dosage', 'quantity',
+                'similar_products'
+            ),
         ('СЕО ключевые слова', {
             'fields': ('seo_keywords',)
         })
