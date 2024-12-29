@@ -10,7 +10,6 @@ class Product1C(models.Model):
     name_en = models.CharField(
         max_length=255,
         verbose_name='Наименование (EN)',
-        editable=False
     )
     name = models.CharField(
         max_length=255,
