@@ -66,35 +66,48 @@ class ProductAdmin(admin.ModelAdmin, DynamicArrayMixin):
     inlines = (ProductImageInline,)
     filter_horizontal = ('similar_products',)
 
-    list_display = ('id', 'name_en', 'name', 'brand', 'manufacturer_country',
-                    'form', 'price', 'flavor', 'dosage', 'quantity')
+    list_display = (
+        'id', 'name_en', 'name', 'brand', 'manufacturer_country',
+        'form', 'price', 'is_variation', 'variation_type'
+    )
     list_display_links = ('id', 'name')
-    list_filter = ('categories', 'brand', 'manufacturer_country', 'form',
-                   'is_hit', 'is_sale', 'status', 'rating', 'flavor', 'dosage')
-    search_fields = ('name', 'description', 'flavor', 'dosage', 'quantity')
+    list_filter = (
+        'categories', 'brand', 'manufacturer_country', 'form',
+        'is_hit', 'is_sale', 'status', 'rating',
+        'is_variation', 'variation_type'
+    )
 
     fieldsets = (
-        (None, {
+        ('Основная информация', {
             'fields': (
-                'categories', 'brand', 'manufacturer_country', 'form', 'name_en', 'name', 'flavor', 'dosage', 'description',
-                'price', 'sale_price', 'status', 'rating', 'is_hit', 'is_sale', 'is_recommend', 'quantity',
-                'vendor_code', 'similar_products',
-        )}),
+                'categories', 'brand', 'manufacturer_country', 'form',
+                'name_en', 'name', 'description'
+            )
+        }),
         ('Вариации', {
             'fields': (
-                'flavor', 'dosage', 'quantity', 'similar_products',
+                'is_variation', 'variation_type', 'base_product',
+                'flavor', 'dosage', 'quantity'
+            ),
+            'classes': ('collapse',),
+        }),
+        ('Цены и статусы', {
+            'fields': (
+                'price', 'sale_price', 'status',
+                'is_hit', 'is_sale', 'is_recommend',
+                'rating', 'vendor_code'
             )
         }),
         ('СЕО ключевые слова', {
-            'fields': ('seo_keywords',)
-        }),
+            'fields': ('seo_keywords',),
+            'classes': ('collapse',)
+        })
     )
 
     def get_queryset(self, request):
-        queryset = super(ProductAdmin, self).get_queryset(request)
-        queryset = queryset.select_related('brand', 'manufacturer_country', 'form') \
-                           .prefetch_related('categories', 'similar_products')
-        return queryset
+        return super().get_queryset(request).select_related(
+            'brand', 'manufacturer_country', 'form', 'base_product'
+        ).prefetch_related('categories', 'variations')
 
 
 @admin.register(ProductReview)

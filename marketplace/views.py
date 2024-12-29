@@ -89,7 +89,7 @@ class ProductViewSet(ReadOnlyModelViewSet):
     @action(detail=True, methods=['get'])
     def variations(self, request, pk=None):
         instance = self.get_object()
-        similar_products = instance.similar_products.all()
+        base_product = instance.base_product if instance.is_variation else instance
 
         variations = {
             'current': {
@@ -105,36 +105,41 @@ class ProductViewSet(ReadOnlyModelViewSet):
             'quantities': []
         }
 
-        # Группируем все вариации
-        flavors = similar_products.filter(flavor__isnull=False).distinct()
-        if flavors.exists():
-            variations['flavors'] = [{
-                'id': prod.id,
-                'flavor': prod.flavor,
-                'in_stock': prod.status == Product.ProductStatus.in_stock,
-                'product_id': prod.id
-            } for prod in flavors]
+        if base_product:
+            # Получаем все вариации базового продукта
+            flavor_variations = base_product.variations.filter(variation_type='flavor')
+            dosage_variations = base_product.variations.filter(variation_type='dosage')
+            quantity_variations = base_product.variations.filter(variation_type='quantity')
 
-        dosages = similar_products.filter(dosage__isnull=False).distinct()
-        if dosages.exists():
-            variations['dosages'] = [{
-                'id': prod.id,
-                'dosage': prod.dosage,
-                'in_stock': prod.status == Product.ProductStatus.in_stock,
-                'product_id': prod.id
-            } for prod in dosages]
+            variations['flavors'] = [
+                {
+                    'id': v.id,
+                    'flavor': v.flavor,
+                    'in_stock': v.status == Product.ProductStatus.in_stock,
+                    'product_id': v.id
+                } for v in flavor_variations if v.id != instance.id
+            ]
 
-        quantities = similar_products.filter(quantity__isnull=False).distinct()
-        if quantities.exists():
-            variations['quantities'] = [{
-                'id': prod.id,
-                'quantity': prod.quantity,
-                'in_stock': prod.status == Product.ProductStatus.in_stock,
-                'product_id': prod.id
-            } for prod in quantities]
+            variations['dosages'] = [
+                {
+                    'id': v.id,
+                    'dosage': v.dosage,
+                    'in_stock': v.status == Product.ProductStatus.in_stock,
+                    'product_id': v.id
+                } for v in dosage_variations if v.id != instance.id
+            ]
+
+            variations['quantities'] = [
+                {
+                    'id': v.id,
+                    'quantity': v.quantity,
+                    'in_stock': v.status == Product.ProductStatus.in_stock,
+                    'product_id': v.id
+                } for v in quantity_variations if v.id != instance.id
+            ]
 
         return Response(variations)
-
+    
     @extend_schema(
         parameters=[
             OpenApiParameter(name='sub_category_id', description='Sub category ID', required=False, type={'type': 'integer'}),

@@ -88,7 +88,33 @@ class Product(models.Model):
 
     class ProductStatus(models.TextChoices):
         in_stock = 'in_stock', 'В наличии'
-        out_of_stock = 'out_of_stock', 'Нет в наличии'  # Исправляем значение с coming_soon
+        out_of_stock = 'out_of_stock', 'Нет в наличии'
+
+    base_product = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='variations',
+        verbose_name='Базовый товар',
+        help_text='Если это вариация, укажите базовый товар'
+    )
+    is_variation = models.BooleanField(
+        default=False,
+        verbose_name='Является вариацией',
+        help_text='Отметьте, если это вариация другого товара'
+    )
+    variation_type = models.CharField(
+        max_length=20,
+        choices=[
+            ('flavor', 'Вкус'),
+            ('dosage', 'Дозировка'),
+            ('quantity', 'Количество')
+        ],
+        null=True,
+        blank=True,
+        verbose_name='Тип вариации'
+    )
 
     categories = models.ManyToManyField(Category, verbose_name='Категории', related_name='products')
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE, verbose_name='Бренд', related_name='products')
@@ -145,6 +171,19 @@ class Product(models.Model):
     @property
     def first_category(self):
         return self.categories.all().first()
+
+    def get_all_variations(self):
+        """Получить все вариации для этого товара"""
+        if self.is_variation:
+            # Если это вариация, получаем от базового товара
+            return self.base_product.variations.all()
+        # Если это базовый товар, получаем его вариации
+        return self.variations.all()
+
+    def get_variations_by_type(self, variation_type):
+        """Получить вариации определенного типа"""
+        variations = self.get_all_variations()
+        return variations.filter(variation_type=variation_type)
 
 
 class ProductImage(models.Model):

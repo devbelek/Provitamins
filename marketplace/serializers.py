@@ -113,7 +113,8 @@ class ProductSerializer(serializers.ModelSerializer):
         return data
 
     def get_variations(self, obj):
-        similar_products = obj.similar_products.all()
+        # Получаем базовый продукт
+        base_product = obj.base_product if obj.is_variation else obj
 
         variations = {
             'current': {
@@ -129,35 +130,38 @@ class ProductSerializer(serializers.ModelSerializer):
             'quantities': []
         }
 
-        # Группируем по вкусам
-        flavors = similar_products.filter(flavor__isnull=False).distinct()
-        if flavors.exists():
-            variations['flavors'] = [{
-                'id': prod.id,
-                'flavor': prod.flavor,
-                'in_stock': prod.status == Product.ProductStatus.in_stock,
-                'product_id': prod.id
-            } for prod in flavors]
+        if base_product:
+            # Получаем вариации по разным типам
+            flavor_variations = base_product.variations.filter(variation_type='flavor')
+            dosage_variations = base_product.variations.filter(variation_type='dosage')
+            quantity_variations = base_product.variations.filter(variation_type='quantity')
 
-        # Группируем по дозировкам
-        dosages = similar_products.filter(dosage__isnull=False).distinct()
-        if dosages.exists():
-            variations['dosages'] = [{
-                'id': prod.id,
-                'dosage': prod.dosage,
-                'in_stock': prod.status == Product.ProductStatus.in_stock,
-                'product_id': prod.id
-            } for prod in dosages]
+            variations['flavors'] = [
+                {
+                    'id': v.id,
+                    'flavor': v.flavor,
+                    'in_stock': v.status == Product.ProductStatus.in_stock,
+                    'product_id': v.id
+                } for v in flavor_variations if v.id != obj.id
+            ]
 
-        # Группируем по количеству
-        quantities = similar_products.filter(quantity__isnull=False).distinct()
-        if quantities.exists():
-            variations['quantities'] = [{
-                'id': prod.id,
-                'quantity': prod.quantity,
-                'in_stock': prod.status == Product.ProductStatus.in_stock,
-                'product_id': prod.id
-            } for prod in quantities]
+            variations['dosages'] = [
+                {
+                    'id': v.id,
+                    'dosage': v.dosage,
+                    'in_stock': v.status == Product.ProductStatus.in_stock,
+                    'product_id': v.id
+                } for v in dosage_variations if v.id != obj.id
+            ]
+
+            variations['quantities'] = [
+                {
+                    'id': v.id,
+                    'quantity': v.quantity,
+                    'in_stock': v.status == Product.ProductStatus.in_stock,
+                    'product_id': v.id
+                } for v in quantity_variations if v.id != obj.id
+            ]
 
         return variations
 
