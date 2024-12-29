@@ -149,6 +149,7 @@ class Product1CAdmin(admin.ModelAdmin):
             # Если включили публикацию
             self.publish_products(request, Product1C.objects.filter(pk=obj.pk))
 
+
 @admin.register(SyncLog)
 class SyncLogAdmin(admin.ModelAdmin):
     list_display = ('product_1c', 'sync_type', 'status', 'created_at')
