@@ -49,7 +49,7 @@ class Product1C(models.Model):
     manufacturer_country = models.ForeignKey(Country, on_delete=models.SET_NULL, null=True, blank=True)
     form = models.ForeignKey(Form, on_delete=models.SET_NULL, null=True, blank=True)
     description = RichTextField(blank=True, null=True)
-    categories = models.ManyToManyField(Category, blank=True)
+    categories = models.ManyToManyField('Category', blank=True)
     flavor = models.CharField(max_length=255, blank=True, null=True)
     dosage = models.CharField(max_length=255, blank=True, null=True)
     sale_price = models.IntegerField(blank=True, null=True)
