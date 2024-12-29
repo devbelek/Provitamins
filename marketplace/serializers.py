@@ -113,10 +113,21 @@ class ProductSerializer(serializers.ModelSerializer):
         return data
 
     def get_variations(self, obj):
-        # Получаем базовый продукт
         base_product = obj.base_product if obj.is_variation else obj
+        variations = obj.variations.all() if not obj.is_variation else base_product.variations.all()
 
-        variations = {
+        available_variations = []
+        for variation in variations:
+            available_variations.append({
+                'id': variation.id,
+                'flavor': variation.flavor,
+                'dosage': variation.dosage,
+                'quantity': variation.quantity,
+                'in_stock': variation.status == Product.ProductStatus.in_stock,
+                'product_id': variation.id
+            })
+
+        return {
             'current': {
                 'id': obj.id,
                 'flavor': obj.flavor,
@@ -125,46 +136,8 @@ class ProductSerializer(serializers.ModelSerializer):
                 'in_stock': obj.status == Product.ProductStatus.in_stock,
                 'product_id': obj.id
             },
-            'flavors': [],
-            'dosages': [],
-            'quantities': []
+            'available_variations': available_variations
         }
-
-        if base_product:
-            # Получаем вариации по разным типам
-            flavor_variations = base_product.variations.filter(variation_type='flavor')
-            dosage_variations = base_product.variations.filter(variation_type='dosage')
-            quantity_variations = base_product.variations.filter(variation_type='quantity')
-
-            variations['flavors'] = [
-                {
-                    'id': v.id,
-                    'flavor': v.flavor,
-                    'in_stock': v.status == Product.ProductStatus.in_stock,
-                    'product_id': v.id
-                } for v in flavor_variations if v.id != obj.id
-            ]
-
-            variations['dosages'] = [
-                {
-                    'id': v.id,
-                    'dosage': v.dosage,
-                    'in_stock': v.status == Product.ProductStatus.in_stock,
-                    'product_id': v.id
-                } for v in dosage_variations if v.id != obj.id
-            ]
-
-            variations['quantities'] = [
-                {
-                    'id': v.id,
-                    'quantity': v.quantity,
-                    'in_stock': v.status == Product.ProductStatus.in_stock,
-                    'product_id': v.id
-                } for v in quantity_variations if v.id != obj.id
-            ]
-
-        return variations
-
 
 class TreeCategorySerializer(serializers.ModelSerializer):
     children = serializers.SerializerMethodField(source="get_children")

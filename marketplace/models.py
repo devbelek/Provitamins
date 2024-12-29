@@ -104,17 +104,6 @@ class Product(models.Model):
         verbose_name='Является вариацией',
         help_text='Отметьте, если это вариация другого товара'
     )
-    variation_type = models.CharField(
-        max_length=20,
-        choices=[
-            ('flavor', 'Вкус'),
-            ('dosage', 'Дозировка'),
-            ('quantity', 'Количество')
-        ],
-        null=True,
-        blank=True,
-        verbose_name='Тип вариации'
-    )
 
     categories = models.ManyToManyField(Category, verbose_name='Категории', related_name='products')
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE, verbose_name='Бренд', related_name='products')
