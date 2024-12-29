@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny  # Добавляем это
 from .serializers import Product1CSerializer
 from .models import Product1C
+from marketplace.models import Product
 
 
 class Product1CView(APIView):
