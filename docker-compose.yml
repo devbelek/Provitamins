@@ -65,10 +65,10 @@ services:
     container_name: vitamins-db
     image: postgres:latest
     ports:
-      - "5433:5432"  # Изменено с 5432 на 5433
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data/
-      - ./vitamin_backup.sql:/docker-entrypoint-initdb.d/vitamin_backup.sql
+      - ../vitamin_backup.sql:/docker-entrypoint-initdb.d/vitamin_backup.sql  # Изменили путь на ../
     env_file: .env
 
   redis:
