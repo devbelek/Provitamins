@@ -3,8 +3,7 @@ from django.utils.html import format_html
 from .models import Product1C, SyncLog
 from marketplace.models import Product
 from django.contrib import messages
-
-from ..marketplace.admin import ProductImageInline
+from marketplace.admin import ProductImageInline
 
 
 class SyncLogInline(admin.TabularInline):
