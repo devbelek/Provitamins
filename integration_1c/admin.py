@@ -36,11 +36,10 @@ class Product1CAdmin(admin.ModelAdmin):
         ('Основная информация', {
             'fields': (
                 'name', 'vendor_code', 'price', 'status',
-                ('brand', 'manufacturer_country'),
+                ('brand', 'manufacturer_country'),  # Группируем обязательные поля
                 'form',
                 'categories', 'description', 'flavor', 'dosage'
             )
-        }),
         }),
         ('Цены и статусы', {
             'fields': (
