@@ -9,38 +9,63 @@ class Product1CSerializer(serializers.ModelSerializer):
         fields = ('name_en', 'vendor_code', 'price', 'status')
 
     def create(self, validated_data):
-        vendor_code = validated_data['vendor_code']
+        vendor_code = validated_data.get('vendor_code')
+        name_en = validated_data.get('name_en', '')
+        price = validated_data.get('price')
+        status = validated_data.get('status')
 
         # Проверяем существование товара в основном каталоге
         main_product = Product.objects.filter(vendor_code=vendor_code).first()
 
         if main_product:
-            # Если товар существует в основном каталоге, обновляем его
-            main_product.name_en = validated_data['name_en']
-            main_product.price = validated_data['price']
-            main_product.status = validated_data['status']
-            main_product.save()
+            try:
+                # Если товар существует в основном каталоге, обновляем его
+                if name_en:
+                    main_product.name_en = name_en
+                if price:
+                    main_product.price = price
+                if status:
+                    main_product.status = status
+                main_product.save()
 
-            # Создаем запись в 1С для логирования
-            instance = Product1C.objects.create(
-                name_en=validated_data['name_en'],
-                vendor_code=validated_data['vendor_code'],
-                price=validated_data['price'],
-                status=validated_data['status']
-            )
+                # Создаем запись в 1С для логирования
+                instance = Product1C.objects.create(
+                    name_en=name_en,
+                    vendor_code=vendor_code,
+                    price=price,
+                    status=status
+                )
 
-            # Логируем обновление
-            SyncLog.objects.create(
-                product_1c=instance,
-                sync_type='update',
-                status=True,
-                message=f'Товар обновлен в основном каталоге. Артикул: {vendor_code}'
-            )
+                # Логируем обновление
+                SyncLog.objects.create(
+                    product_1c=instance,
+                    sync_type='update',
+                    status=True,
+                    message=(
+                        f'Товар обновлен в основном каталоге. '
+                        f'Артикул: {vendor_code}. '
+                        f'Старая цена: {main_product.price}, новая цена: {price}'
+                    )
+                )
 
-            # Удаляем запись из 1С после логирования
-            instance.delete()
+                # Удаляем запись из 1С после логирования
+                instance.delete()
 
-            return validated_data
+                return {
+                    'name_en': name_en,
+                    'vendor_code': vendor_code,
+                    'price': price,
+                    'status': status
+                }
+            except Exception as e:
+                # Если произошла ошибка при обновлении
+                SyncLog.objects.create(
+                    product_1c=instance,
+                    sync_type='update',
+                    status=False,
+                    message=f'Ошибка при обновлении товара: {str(e)}'
+                )
+                raise serializers.ValidationError(f"Ошибка при обновлении товара: {str(e)}")
 
         # Если товара нет в основном каталоге
         instance = Product1C.objects.filter(vendor_code=vendor_code).first()
@@ -48,8 +73,14 @@ class Product1CSerializer(serializers.ModelSerializer):
         if instance:
             # Обновляем существующий товар в 1C
             old_price = instance.price
-            for key, value in validated_data.items():
-                setattr(instance, key, value)
+
+            if name_en:
+                instance.name_en = name_en
+            if price:
+                instance.price = price
+            if status:
+                instance.status = status
+
             instance.save()
 
             # Логируем обновление
@@ -61,14 +92,22 @@ class Product1CSerializer(serializers.ModelSerializer):
             )
         else:
             # Создаем новый товар в 1C
-            instance = Product1C.objects.create(**validated_data)
+            try:
+                instance = Product1C.objects.create(
+                    name_en=name_en,
+                    vendor_code=vendor_code,
+                    price=price,
+                    status=status
+                )
 
-            # Логируем создание
-            SyncLog.objects.create(
-                product_1c=instance,
-                sync_type='create',
-                status=True,
-                message='Товар создан в 1C'
-            )
+                # Логируем создание
+                SyncLog.objects.create(
+                    product_1c=instance,
+                    sync_type='create',
+                    status=True,
+                    message='Товар успешно создан в 1C'
+                )
+            except Exception as e:
+                raise serializers.ValidationError(f"Ошибка при создании товара: {str(e)}")
 
         return instance
