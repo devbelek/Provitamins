@@ -53,6 +53,7 @@ class ProductSerializer(serializers.ModelSerializer):
     form_name = serializers.CharField(source='form.name', read_only=True, allow_blank=True, allow_null=True)
     country_name = serializers.CharField(source='manufacturer_country.name', read_only=True)
     similar_products = serializers.SerializerMethodField()
+    name_en = serializers.CharField(allow_blank=True, allow_null=True)  # Добавляем поле name_en
 
     class Meta:
         model = Product
@@ -63,6 +64,7 @@ class ProductSerializer(serializers.ModelSerializer):
         return [{
             'id': product.id,
             'name': product.name,
+            'name_en': product.name_en,  # Добавляем name_en в похожие товары
             'flavor': product.flavor,
             'dosage': product.dosage,
             'price': product.price,
