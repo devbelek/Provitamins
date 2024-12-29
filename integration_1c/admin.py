@@ -3,7 +3,6 @@ from django.utils.html import format_html
 from .models import Product1C, SyncLog
 from marketplace.models import Product
 
-
 class SyncLogInline(admin.TabularInline):
     model = SyncLog
     extra = 0
@@ -13,7 +12,6 @@ class SyncLogInline(admin.TabularInline):
 
     def has_add_permission(self, request, obj=None):
         return False
-
 
 @admin.register(Product1C)
 class Product1CAdmin(admin.ModelAdmin):
@@ -35,11 +33,20 @@ class Product1CAdmin(admin.ModelAdmin):
         }),
         ('Основная информация', {
             'fields': (
-                'name', 'vendor_code',
-                'price', 'status',
-                'brand', 'manufacturer_country',  # Добавляем эти поля
-                'form'  # Опциональное поле
+                'name', 'vendor_code', 'price', 'status',
+                'categories', 'brand', 'manufacturer_country', 'form',
+                'description', 'flavor', 'dosage'
             )
+        }),
+        ('Цены и статусы', {
+            'fields': (
+                'sale_price', 'is_hit', 'is_sale', 'is_recommend',
+                'quantity', 'rating'
+            )
+        }),
+        ('SEO', {
+            'fields': ('seo_keywords',),
+            'classes': ('collapse',)
         }),
         ('Публикация', {
             'fields': (
@@ -47,7 +54,7 @@ class Product1CAdmin(admin.ModelAdmin):
                 'published_status',
                 'published_product'
             )
-        }),
+        })
     )
 
     def get_readonly_fields(self, request, obj=None):
@@ -83,32 +90,23 @@ class Product1CAdmin(admin.ModelAdmin):
                         vendor_code=product.vendor_code,
                         price=product.price,
                         status=product.status,
-                        # Обязательные поля
-                        description="",  # Пустое описание по умолчанию
-                        brand_id=1,  # Нужно будет выбрать бренд по умолчанию
-                        manufacturer_country_id=1,  # Нужно будет выбрать страну по умолчанию
-                        # Необязательные поля
-                        flavor=product.flavor if hasattr(product, 'flavor') else None,
-                        dosage=product.dosage if hasattr(product, 'dosage') else None,
-                        form_id=None,  # Форма не обязательна
-                        sale_price=None,
-                        is_hit=False,
-                        is_sale=False,
-                        is_recommend=False,
-                        quantity="1",  # Значение по умолчанию
-                        rating=None,
-                        seo_keywords=None
+                        description=product.description or "",
+                        brand=product.brand,
+                        manufacturer_country=product.manufacturer_country,
+                        form=product.form,
+                        flavor=product.flavor,
+                        dosage=product.dosage,
+                        sale_price=product.sale_price,
+                        is_hit=product.is_hit,
+                        is_sale=product.is_sale,
+                        is_recommend=product.is_recommend,
+                        quantity=product.quantity or "1",
+                        rating=product.rating,
+                        seo_keywords=product.seo_keywords
                     )
 
                 # Обновляем данные
-                prod.name = product.name or product.name_en
-                prod.price = product.price
-                prod.status = product.status
                 prod.save()
-
-                # Добавляем категории если нужно
-                # prod.categories.add(category_id)  # Нужно будет добавить категорию по умолчанию
-
                 product.published_product = prod
                 product.save()
 
@@ -150,7 +148,6 @@ class Product1CAdmin(admin.ModelAdmin):
         if obj.is_published and not was_published:
             # Если включили публикацию
             self.publish_products(request, Product1C.objects.filter(pk=obj.pk))
-
 
 @admin.register(SyncLog)
 class SyncLogAdmin(admin.ModelAdmin):

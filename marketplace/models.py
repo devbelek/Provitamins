@@ -23,8 +23,10 @@ class Catalogue(models.Model):
 
 class Category(MPTTModel):
     """Модель категории товара"""
-    catalogue = models.ForeignKey(Catalogue, on_delete=models.CASCADE, verbose_name='Каталог', related_name='categories', blank=True, null=True)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children', verbose_name='Родительская категория')
+    catalogue = models.ForeignKey(Catalogue, on_delete=models.CASCADE, verbose_name='Каталог',
+                                  related_name='categories', blank=True, null=True)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children',
+                               verbose_name='Родительская категория')
 
     name = models.CharField(max_length=255, verbose_name='Название категории')
 
@@ -35,7 +37,7 @@ class Category(MPTTModel):
     def __str__(self):
         if self.level == 0:
             return f"{self.name} <-- {self.catalogue.name if self.catalogue else 'Без каталога'}"
-        return (f"{self.name} <-- {self.parent.name if self.parent else 'Без родительской категории' } "
+        return (f"{self.name} <-- {self.parent.name if self.parent else 'Без родительской категории'} "
                 f"<-- {self.parent.catalogue.name if self.parent.catalogue else 'Без каталога'}")
 
 
@@ -83,14 +85,17 @@ class Form(models.Model):
 
 class Product(models.Model):
     """Модель товара"""
+
     class ProductStatus(models.TextChoices):
         in_stock = 'in_stock', 'В наличии'
         out_of_stock = 'out_of_stock', 'Нет в наличии'  # Исправляем значение с coming_soon
 
     categories = models.ManyToManyField(Category, verbose_name='Категории', related_name='products')
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE, verbose_name='Бренд', related_name='products')
-    manufacturer_country = models.ForeignKey(Country, on_delete=models.CASCADE, verbose_name='Страна производитель', related_name='products')
-    form = models.ForeignKey(Form, on_delete=models.CASCADE, verbose_name='Форма', related_name='products', blank=True, null=True)
+    manufacturer_country = models.ForeignKey(Country, on_delete=models.CASCADE, verbose_name='Страна производитель',
+                                             related_name='products')
+    form = models.ForeignKey(Form, on_delete=models.CASCADE, verbose_name='Форма', related_name='products', blank=True,
+                             null=True)
 
     similar_products = models.ManyToManyField(
         'self',
@@ -100,16 +105,17 @@ class Product(models.Model):
         help_text="Товары с похожими характеристиками (например, тот же продукт с другим вкусом)"
     )
 
-    # Добавляем новые поля
     flavor = models.CharField(max_length=255, verbose_name='Вкус', blank=True, null=True)
     dosage = models.CharField(max_length=255, verbose_name='Дозировка', blank=True, null=True)
+    flavorArray = models.URLField(blank=True, null=True)
+    dosageArray = models.URLField(blank=True, null=True)
 
-    # Остальные существующие поля
     name = models.CharField(max_length=255, verbose_name='Наименование товара')
     description = RichTextField(verbose_name='Описание товара')
     price = models.IntegerField(verbose_name='Цена')
     sale_price = models.IntegerField(verbose_name='Цена со скидкой', blank=True, null=True)
-    status = models.CharField(max_length=20, choices=ProductStatus.choices, default=ProductStatus.in_stock, verbose_name='Статус товара')
+    status = models.CharField(max_length=20, choices=ProductStatus.choices, default=ProductStatus.in_stock,
+                              verbose_name='Статус товара')
     is_hit = models.BooleanField(default=False, verbose_name='Хит')
     is_sale = models.BooleanField(default=False, verbose_name='Акция')
     is_recommend = models.BooleanField(default=False, verbose_name='Рекомендуемый')
@@ -175,13 +181,15 @@ class ProductReview(models.Model):
 
 class Order(models.Model):
     """Модель заказа"""
+
     class OrderStatus(models.TextChoices):
         new = 'new', 'Новый'
         in_progress = 'in_progress', 'В обработке'
         completed = 'completed', 'Завершен'
 
     date_created = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
-    status = models.CharField(max_length=20, choices=OrderStatus.choices, default=OrderStatus.new, verbose_name='Статус заказа')
+    status = models.CharField(max_length=20, choices=OrderStatus.choices, default=OrderStatus.new,
+                              verbose_name='Статус заказа')
     full_name = models.CharField(max_length=255, verbose_name='ФИО')
     phone = models.CharField(max_length=255, verbose_name='Телефон')
     total_price = models.IntegerField(verbose_name='Общая стоимость заказа', blank=True, null=True)
