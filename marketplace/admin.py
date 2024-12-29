@@ -82,12 +82,12 @@ class ProductAdmin(admin.ModelAdmin, DynamicArrayMixin):
         )}),
         ('Вариации', {
             'fields': (
-                'flavor', 'dosage', 'quantity',
-                'similar_products'
-            ),
+                'flavor', 'dosage', 'quantity', 'similar_products',
+            )
+        }),
         ('СЕО ключевые слова', {
             'fields': ('seo_keywords',)
-        })
+        }),
     )
 
     def get_queryset(self, request):
