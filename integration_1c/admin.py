@@ -6,6 +6,7 @@ from django.contrib import messages
 from marketplace.admin import ProductImageInline
 from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
 
+
 class Product1CImageInline(admin.TabularInline):
     model = ProductImage1C
     extra = 0
@@ -30,7 +31,7 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):  # Добавляем
 
     list_display = (
         'id', 'name_en', 'name', 'brand', 'manufacturer_country',
-        'form', 'price', 'is_variation'  # Делаем как в ProductAdmin
+        'form', 'price',
     )
     list_display_links = ('id', 'name')
 
@@ -38,7 +39,6 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):  # Добавляем
     list_filter = (
         'categories', 'brand', 'manufacturer_country', 'form',
         'is_hit', 'is_sale', 'status', 'rating',
-        'is_variation',
     )
 
     # Используем те же fieldsets что и в ProductAdmin
