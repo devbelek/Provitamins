@@ -58,16 +58,38 @@ class ProductFilter(django_filters.FilterSet):
         return queryset
 
     def filter_catalogue(self, queryset, name, value):
-        return queryset.filter(Q(categories__catalogue=value) | Q(categories__parent__catalogue=value)).distinct()
+        """
+        Фильтрация по каталогу:
+        - Получаем все категории каталога
+        - Получаем все их подкатегории
+        - Фильтруем товары по всем этим категориям
+        """
+        try:
+            catalogue = Catalogue.objects.get(id=value)
+            # Получаем все корневые категории каталога
+            root_categories = Category.objects.filter(catalogue=catalogue)
+            # Получаем все подкатегории для каждой корневой категории
+            all_categories = []
+            for root_category in root_categories:
+                all_categories.extend(root_category.get_descendants(include_self=True))
+            return queryset.filter(categories__in=all_categories).distinct()
+        except Catalogue.DoesNotExist:
+            return queryset.none()
 
     def filter_category(self, queryset, name, value):
+        """
+        Фильтрация по категории:
+        - Если категория принадлежит каталогу - это корневая категория
+        - Если есть parent - это подкатегория
+        """
         try:
             category = Category.objects.get(id=value)
-            # Получаем все дочерние категории включая саму категорию
-            category_with_children = category.get_descendants(include_self=True)
-            return queryset.filter(categories__in=category_with_children).distinct()
+            # Получаем все подкатегории включая текущую
+            categories = category.get_descendants(include_self=True)
+            return queryset.filter(categories__in=categories).distinct()
         except Category.DoesNotExist:
             return queryset.none()
+
 
 class ProductOrderingFilter(OrderingFilter):
     def get_ordering(self, request, queryset, view):
