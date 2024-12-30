@@ -37,9 +37,9 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
 
     list_filter = (
         'categories', 'brand', 'manufacturer_country', 'form',
-        'is_hit', 'is_sale', 'status', 'rating',
+        'is_hit', 'is_sale', 'status', 'rating', 'is_variation'
     )
-    list_editable = ('published_product', )
+    list_editable = ('published_product',)
     fieldsets = (
         ('Основная информация', {
             'fields': (
@@ -70,6 +70,11 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
         })
     )
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "base_product":
+            kwargs["queryset"] = Product1C.objects.filter(is_variation=False)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
             'brand',
@@ -83,7 +88,6 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
         )
 
     def published_status(self, obj):
-        # Проверяем существование товара в основном каталоге
         if Product.objects.filter(vendor_code=obj.vendor_code).exists():
             return format_html(
                 '<span style="color: green;">✔ Опубликован</span>'
@@ -96,10 +100,10 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
 
     actions = ['publish_products', 'unpublish_products']
 
+    @transaction.atomic
     def publish_products(self, request, queryset):
         for product in queryset:
             if not product.published_product:
-                # Проверяем наличие обязательных полей
                 if not all([product.brand, product.manufacturer_country]):
                     self.message_user(
                         request,
@@ -110,26 +114,40 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
                     continue
 
                 try:
-                    # Если это вариация, проверяем опубликован ли базовый товар
+                    # Проверяем базовый товар
                     base_in_marketplace = None
                     if product.is_variation and product.base_product:
+                        # Ищем базовый товар в основном каталоге
                         base_in_marketplace = Product.objects.filter(
                             vendor_code=product.base_product.vendor_code
                         ).first()
+
+                        # Если базового товара нет в основном каталоге
                         if not base_in_marketplace:
-                            # Публикуем базовый товар
-                            self.publish_products(request, Product1C.objects.filter(pk=product.base_product.pk))
+                            # Проверяем опубликован ли он
+                            if not product.base_product.published_product:
+                                # Публикуем базовый товар
+                                self.publish_products(request, Product1C.objects.filter(pk=product.base_product.pk))
+
                             base_in_marketplace = Product.objects.filter(
                                 vendor_code=product.base_product.vendor_code
                             ).first()
 
+                            if not base_in_marketplace:
+                                self.message_user(
+                                    request,
+                                    f'Не удалось найти или опубликовать базовый товар для {product.name_en}',
+                                    level='ERROR'
+                                )
+                                continue
+
                     new_product = Product.objects.create(
-                        name=product.name or product.name_en,  # Используем name_en если name пустой
+                        name=product.name or product.name_en,
                         name_en=product.name_en,
                         vendor_code=product.vendor_code,
-                        price=product.price or 0,  # Значение по умолчанию для цены
+                        price=product.price or 0,
                         status=product.status,
-                        description=product.description or "",  # Пустая строка вместо null
+                        description=product.description or "",
                         brand=product.brand,
                         manufacturer_country=product.manufacturer_country,
                         form=product.form,
@@ -142,16 +160,14 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
                         quantity=product.quantity or "",
                         rating=product.rating,
                         seo_keywords=product.seo_keywords or [],
-                        is_variation=product.is_variation or False,
+                        is_variation=product.is_variation,
                         base_product=base_in_marketplace
                     )
 
-                    # Добавляем категории если есть
                     if hasattr(product, 'categories'):
                         new_product.categories.set(product.categories.all())
 
                     # Копируем изображения
-                    from marketplace.models import ProductImage
                     for image in product.images.all():
                         try:
                             ProductImage.objects.create(
@@ -165,7 +181,6 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
                                 level='WARNING'
                             )
 
-                    # Логируем публикацию
                     SyncLog.objects.create(
                         product_1c=product,
                         sync_type='publish',
@@ -173,7 +188,6 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
                         message='Товар успешно опубликован в основном каталоге'
                     )
 
-                    # Удаляем товар из 1С
                     product.delete()
 
                     self.message_user(
@@ -191,14 +205,13 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
 
     publish_products.short_description = 'Опубликовать выбранные товары'
 
+    @transaction.atomic
     def unpublish_products(self, request, queryset):
         for product in queryset:
-            # Находим соответствующий товар в основном каталоге
             main_product = Product.objects.filter(vendor_code=product.vendor_code).first()
             if main_product:
                 main_product.delete()
 
-                # Логируем снятие с публикации
                 SyncLog.objects.create(
                     product_1c=product,
                     sync_type='unpublish',
@@ -208,14 +221,15 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
 
     unpublish_products.short_description = 'Снять с публикации'
 
+    @transaction.atomic
     def save_model(self, request, obj, form, change):
-        if obj.published_product:  # Changed from is_published to published_product
+        if obj.published_product:
             if not all([obj.brand, obj.manufacturer_country]):
                 messages.error(
                     request,
                     'Невозможно опубликовать товар. Заполните обязательные поля (Бренд, Страна производитель)'
                 )
-                obj.published_product = False  # Changed from is_published to published_product
+                obj.published_product = False
                 super().save_model(request, obj, form, change)
                 return
 
