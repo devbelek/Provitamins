@@ -24,74 +24,58 @@ class SyncLogInline(admin.TabularInline):
 
 
 @admin.register(Product1C)
-class Product1CAdmin(admin.ModelAdmin):
-    inlines = (SyncLogInline,)
+class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):  # Добавляем DynamicArrayMixin
+    inlines = (Product1CImageInline, SyncLogInline)
+    filter_horizontal = ('similar_products',)
 
     list_display = (
         'id', 'name_en', 'name', 'brand', 'manufacturer_country',
-        'form', 'price', 'sale_price', 'status', 'published_product'
+        'form', 'price', 'is_variation'  # Делаем как в ProductAdmin
     )
-    list_display_links = ('id', 'name', 'name_en')
-    list_editable = ('price', 'sale_price', 'status', 'published_product')
+    list_display_links = ('id', 'name')
 
-    list_filter = [
-        ('published_product', admin.BooleanFieldListFilter),
-        ('brand', admin.RelatedFieldListFilter),
-        ('manufacturer_country', admin.RelatedFieldListFilter),
-        ('form', admin.RelatedFieldListFilter),
-        ('categories', admin.RelatedFieldListFilter),
-        ('status', admin.ChoicesFieldListFilter),
-        ('is_hit', admin.BooleanFieldListFilter),
-        ('is_sale', admin.BooleanFieldListFilter),
-        ('is_recommend', admin.BooleanFieldListFilter),
-        ('created_at', admin.DateFieldListFilter),
-    ]
-
-    search_fields = (
-        'name', 'name_en', 'description',
-        'flavor', 'dosage', 'vendor_code',
-        'brand__name', 'manufacturer_country__name'
+    # Используем те же list_filter что и в ProductAdmin
+    list_filter = (
+        'categories', 'brand', 'manufacturer_country', 'form',
+        'is_hit', 'is_sale', 'status', 'rating',
+        'is_variation',
     )
 
+    # Используем те же fieldsets что и в ProductAdmin
     fieldsets = (
         ('Основная информация', {
             'fields': (
-                'categories',
-                ('brand', 'manufacturer_country'),
-                'form',
-                ('name_en', 'name'),
-                ('flavor', 'dosage'),
-                'description',
-                ('price', 'sale_price'),
-                'status',
-                'quantity',
-                'vendor_code'
+                'categories', 'brand', 'manufacturer_country', 'form',
+                'name_en', 'name', 'description'
             )
         }),
-        ('Дополнительные настройки', {
+        ('Вариации', {
             'fields': (
-                'similar_products',
-                ('is_hit', 'is_sale', 'is_recommend'),
-                'rating',
+                'is_variation', 'base_product',
+                'flavor', 'dosage', 'quantity'
             ),
-            'classes': ('collapse',)
+            'classes': ('collapse',),
         }),
-        ('СЕО и публикация', {
+        ('Цены и статусы', {
+            'fields': (
+                'price', 'sale_price', 'status',
+                'is_hit', 'is_sale', 'is_recommend',
+                'rating', 'vendor_code'
+            )
+        }),
+        ('СЕО и публикация', {  # Добавляем специфичные для 1С поля
             'fields': (
                 'seo_keywords',
                 'published_product',
             ),
             'classes': ('collapse',)
-        }),
+        })
     )
-
-    filter_horizontal = ('categories', 'similar_products')
-    save_on_top = True
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
-            'brand', 'manufacturer_country', 'form'
-        ).prefetch_related('categories', 'similar_products')
+            'brand', 'manufacturer_country', 'form', 'base_product'
+        ).prefetch_related('categories', 'variations')
 
     def published_status(self, obj):
         # Проверяем существование товара в основном каталоге
