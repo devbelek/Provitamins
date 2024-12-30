@@ -99,8 +99,14 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
     def publish_products(self, request, queryset):
         for product in queryset:
             if not product.published_product:
+                # Проверяем наличие обязательных полей
                 if not all([product.brand, product.manufacturer_country]):
-                    self.message_user(...)
+                    self.message_user(
+                        request,
+                        f'Товар {product.name_en} не может быть опубликован. '
+                        f'Заполните обязательные поля (Бренд, Страна производитель)',
+                        level='ERROR'
+                    )
                     continue
 
                 try:
@@ -118,31 +124,46 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
                             ).first()
 
                     new_product = Product.objects.create(
-                        name=product.name,
+                        name=product.name or product.name_en,  # Используем name_en если name пустой
                         name_en=product.name_en,
                         vendor_code=product.vendor_code,
-                        price=product.price,
+                        price=product.price or 0,  # Значение по умолчанию для цены
                         status=product.status,
-                        description=product.description,
+                        description=product.description or "",  # Пустая строка вместо null
                         brand=product.brand,
                         manufacturer_country=product.manufacturer_country,
                         form=product.form,
-                        flavor=product.flavor,
-                        dosage=product.dosage,
+                        flavor=product.flavor or "",
+                        dosage=product.dosage or "",
                         sale_price=product.sale_price,
-                        is_hit=product.is_hit,
-                        is_sale=product.is_sale,
-                        is_recommend=product.is_recommend,
-                        quantity=product.quantity,
+                        is_hit=product.is_hit or False,
+                        is_sale=product.is_sale or False,
+                        is_recommend=product.is_recommend or False,
+                        quantity=product.quantity or "",
                         rating=product.rating,
-                        seo_keywords=product.seo_keywords,
-                        is_variation=product.is_variation,
+                        seo_keywords=product.seo_keywords or [],
+                        is_variation=product.is_variation or False,
                         base_product=base_in_marketplace
                     )
 
                     # Добавляем категории если есть
                     if hasattr(product, 'categories'):
                         new_product.categories.set(product.categories.all())
+
+                    # Копируем изображения
+                    from marketplace.models import ProductImage
+                    for image in product.images.all():
+                        try:
+                            ProductImage.objects.create(
+                                product=new_product,
+                                image=image.image
+                            )
+                        except Exception as img_error:
+                            self.message_user(
+                                request,
+                                f'Ошибка при копировании изображения: {str(img_error)}',
+                                level='WARNING'
+                            )
 
                     # Логируем публикацию
                     SyncLog.objects.create(
