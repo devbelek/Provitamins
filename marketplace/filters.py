@@ -61,8 +61,13 @@ class ProductFilter(django_filters.FilterSet):
         return queryset.filter(Q(categories__catalogue=value) | Q(categories__parent__catalogue=value)).distinct()
 
     def filter_category(self, queryset, name, value):
-        return queryset.filter(Q(categories=value) | Q(categories__parent=value)).distinct()
-
+        try:
+            category = Category.objects.get(id=value)
+            # Получаем все дочерние категории включая саму категорию
+            category_with_children = category.get_descendants(include_self=True)
+            return queryset.filter(categories__in=category_with_children).distinct()
+        except Category.DoesNotExist:
+            return queryset.none()
 
 class ProductOrderingFilter(OrderingFilter):
     def get_ordering(self, request, queryset, view):
