@@ -39,7 +39,7 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
         'categories', 'brand', 'manufacturer_country', 'form',
         'is_hit', 'is_sale', 'status', 'rating',
     )
-
+    list_editable = ('published_product', )
     fieldsets = (
         ('Основная информация', {
             'fields': (
