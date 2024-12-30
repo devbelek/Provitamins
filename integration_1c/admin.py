@@ -5,6 +5,7 @@ from marketplace.models import Product
 from django.contrib import messages
 from marketplace.admin import ProductImageInline
 from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
+from django.db import transaction
 
 
 class Product1CImageInline(admin.TabularInline):
