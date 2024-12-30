@@ -194,18 +194,16 @@ class Product1CAdmin(admin.ModelAdmin):
     unpublish_products.short_description = 'Снять с публикации'
 
     def save_model(self, request, obj, form, change):
-        if obj.is_published:
-            # Проверяем обязательные поля перед публикацией
+        if obj.published_product:  # Changed from is_published to published_product
             if not all([obj.brand, obj.manufacturer_country]):
                 messages.error(
                     request,
                     'Невозможно опубликовать товар. Заполните обязательные поля (Бренд, Страна производитель)'
                 )
-                obj.is_published = False
+                obj.published_product = False  # Changed from is_published to published_product
                 super().save_model(request, obj, form, change)
                 return
 
-            # Если все проверки пройдены, публикуем товар
             self.publish_products(request, Product1C.objects.filter(pk=obj.pk))
         else:
             super().save_model(request, obj, form, change)
