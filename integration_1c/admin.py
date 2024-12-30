@@ -74,8 +74,13 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):  # Добавляем
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
-            'brand', 'manufacturer_country', 'form', 'base_product'
-        ).prefetch_related('categories', 'variations')
+            'brand',
+            'manufacturer_country',
+            'form'
+        ).prefetch_related(
+            'categories',
+            'similar_products'
+        )
 
     def published_status(self, obj):
         # Проверяем существование товара в основном каталоге
