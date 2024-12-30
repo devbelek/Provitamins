@@ -109,7 +109,7 @@ class Product1CAdmin(admin.ModelAdmin):
 
     def publish_products(self, request, queryset):
         for product in queryset:
-            if not product.is_published:
+            if not product.published_product:
                 # Проверяем наличие обязательных полей
                 if not all([product.brand, product.manufacturer_country]):
                     self.message_user(
