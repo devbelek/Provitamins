@@ -33,11 +33,19 @@ class Product1C(models.Model):
         blank=True,
         verbose_name='Бренд',
         related_name='products_1c')
-    manufacturer_country = models.ForeignKey(Country, on_delete=models.CASCADE, verbose_name='Страна производитель',
-                                             related_name='products_1c')
-    form = models.ForeignKey(Form, on_delete=models.CASCADE, verbose_name='Форма', related_name='products_1c',
-                             blank=True,
-                             null=True)
+    manufacturer_country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        verbose_name='Страна производитель',
+        related_name='products_1c',
+        null=True)
+    form = models.ForeignKey(
+        Form,
+        on_delete=models.CASCADE,
+        verbose_name='Форма',
+        related_name='products_1c',
+        blank=True,
+        null=True)
 
     flavor = models.CharField(max_length=255, verbose_name='Вкус', blank=True, null=True)
     dosage = models.CharField(max_length=255, verbose_name='Дозировка', blank=True, null=True)
