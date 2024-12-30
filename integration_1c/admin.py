@@ -31,7 +31,7 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
 
     list_display = (
         'id', 'name_en', 'name', 'brand', 'manufacturer_country',
-        'form', 'price', 'sale_price', 'status', 'published_product'
+        'form', 'price', 'sale_price', 'status', 'published_product', 'is_variation'
     )
     list_display_links = ('id', 'name')
 
@@ -51,7 +51,8 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
             'fields': (
                 'is_variation', 'base_product',
                 'flavor', 'dosage', 'quantity'
-            )
+            ),
+            'classes': ('collapse',),
         }),
         ('Цены и статусы', {
             'fields': (
@@ -73,10 +74,12 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
         return super().get_queryset(request).select_related(
             'brand',
             'manufacturer_country',
-            'form'
+            'form',
+            'base_product'
         ).prefetch_related(
             'categories',
-            'similar_products'
+            'similar_products',
+            'variations'
         )
 
     def published_status(self, obj):
