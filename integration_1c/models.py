@@ -53,9 +53,9 @@ class Product1C(models.Model):
     dosageArray = models.URLField(blank=True, null=True)
 
     name_en = models.CharField(max_length=255, verbose_name='Наименование (EN)')
-    name = models.CharField(max_length=255, verbose_name='Наименование товара')
-    description = RichTextField(verbose_name='Описание товара')
-    price = models.IntegerField(verbose_name='Цена')
+    name = models.CharField(max_length=255, verbose_name='Наименование товара', blank=True, null=True)
+    description = RichTextField(verbose_name='Описание товара', blank=True, null=True)
+    price = models.IntegerField(verbose_name='Цена', blank=True, null=True)
     sale_price = models.IntegerField(verbose_name='Цена со скидкой', blank=True, null=True)
     status = models.CharField(max_length=20, choices=Product.ProductStatus.choices,
                               default=Product.ProductStatus.in_stock,
@@ -63,7 +63,7 @@ class Product1C(models.Model):
     is_hit = models.BooleanField(default=False, verbose_name='Хит')
     is_sale = models.BooleanField(default=False, verbose_name='Акция')
     is_recommend = models.BooleanField(default=False, verbose_name='Рекомендуемый')
-    quantity = models.CharField(max_length=255, verbose_name='Количество в упаковке')
+    quantity = models.CharField(max_length=255, verbose_name='Количество в упаковке', blank=True, null=True)
     vendor_code = models.CharField(max_length=255, verbose_name='Артикул')
     rating = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
