@@ -25,7 +25,7 @@ class Product1C(models.Model):
         help_text="Товары с похожими характеристиками (например, тот же продукт с другим вкусом)"
     )
 
-    categories = models.ManyToManyField(Category, verbose_name='Категории', related_name='products_1c')
+    categories = models.ManyToManyField(Category, verbose_name='Категории', related_name='products_1c', blank=True, null=True)
     brand = models.ForeignKey(
         Brand,
         on_delete=models.CASCADE,
