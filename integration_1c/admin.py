@@ -25,23 +25,21 @@ class SyncLogInline(admin.TabularInline):
 
 
 @admin.register(Product1C)
-class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):  # Добавляем DynamicArrayMixin
+class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
     inlines = (Product1CImageInline, SyncLogInline)
     filter_horizontal = ('similar_products',)
 
     list_display = (
         'id', 'name_en', 'name', 'brand', 'manufacturer_country',
-        'form', 'price',
+        'form', 'price', 'sale_price', 'status', 'published_product'
     )
     list_display_links = ('id', 'name')
 
-    # Используем те же list_filter что и в ProductAdmin
     list_filter = (
         'categories', 'brand', 'manufacturer_country', 'form',
         'is_hit', 'is_sale', 'status', 'rating',
     )
 
-    # Используем те же fieldsets что и в ProductAdmin
     fieldsets = (
         ('Основная информация', {
             'fields': (
@@ -49,21 +47,15 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):  # Добавляем
                 'name_en', 'name', 'description'
             )
         }),
-        ('Вариации', {
-            'fields': (
-                'is_variation', 'base_product',
-                'flavor', 'dosage', 'quantity'
-            ),
-            'classes': ('collapse',),
-        }),
         ('Цены и статусы', {
             'fields': (
                 'price', 'sale_price', 'status',
                 'is_hit', 'is_sale', 'is_recommend',
-                'rating', 'vendor_code'
+                'rating', 'vendor_code',
+                'flavor', 'dosage', 'quantity'
             )
         }),
-        ('СЕО и публикация', {  # Добавляем специфичные для 1С поля
+        ('СЕО и публикация', {
             'fields': (
                 'seo_keywords',
                 'published_product',
