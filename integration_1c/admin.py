@@ -4,7 +4,7 @@ from .models import Product1C, SyncLog, ProductImage1C
 from marketplace.models import Product
 from django.contrib import messages
 from marketplace.admin import ProductImageInline
-
+from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
 
 class Product1CImageInline(admin.TabularInline):
     model = ProductImage1C
