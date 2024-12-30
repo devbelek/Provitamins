@@ -17,6 +17,22 @@ class ProductImage1C(models.Model):
 
 
 class Product1C(models.Model):
+    base_product = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='variations',
+        verbose_name='Базовый товар',
+        help_text='Если это вариация, укажите базовый товар'
+    )
+    is_variation = models.BooleanField(
+        default=False,
+        verbose_name='Является вариацией',
+        help_text='Отметьте, если это вариация другого товара',
+        null = True,
+        blank = True,
+    )
     similar_products = models.ManyToManyField(
         'self',
         verbose_name="Похожие товары",

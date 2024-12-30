@@ -47,12 +47,17 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
                 'name_en', 'name', 'description'
             )
         }),
+        ('Вариации товара', {
+            'fields': (
+                'is_variation', 'base_product',
+                'flavor', 'dosage', 'quantity'
+            )
+        }),
         ('Цены и статусы', {
             'fields': (
                 'price', 'sale_price', 'status',
                 'is_hit', 'is_sale', 'is_recommend',
-                'rating', 'vendor_code',
-                'flavor', 'dosage', 'quantity'
+                'rating', 'vendor_code'
             )
         }),
         ('СЕО и публикация', {
@@ -91,24 +96,27 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
     def publish_products(self, request, queryset):
         for product in queryset:
             if not product.published_product:
-                # Проверяем наличие обязательных полей
                 if not all([product.brand, product.manufacturer_country]):
-                    self.message_user(
-                        request,
-                        f'Товар {product.name_en} не может быть опубликован. '
-                        f'Заполните обязательные поля (Бренд, Страна производитель)',
-                        level='ERROR'
-                    )
+                    self.message_user(...)
                     continue
 
-                # Проверяем описание
-                if not product.description:
-                    product.description = ""  # Устанавливаем пустую строку если нет описания
-
                 try:
-                    # Создаем новый товар в основном каталоге
+                    # Если это вариация, проверяем опубликован ли базовый товар
+                    base_in_marketplace = None
+                    if product.is_variation and product.base_product:
+                        base_in_marketplace = Product.objects.filter(
+                            vendor_code=product.base_product.vendor_code
+                        ).first()
+                        if not base_in_marketplace:
+                            # Публикуем базовый товар
+                            self.publish_products(request, Product1C.objects.filter(pk=product.base_product.pk))
+                            base_in_marketplace = Product.objects.filter(
+                                vendor_code=product.base_product.vendor_code
+                            ).first()
+
                     new_product = Product.objects.create(
-                        name=product.name or product.name_en,
+                        name=product.name,
+                        name_en=product.name_en,
                         vendor_code=product.vendor_code,
                         price=product.price,
                         status=product.status,
@@ -122,9 +130,11 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
                         is_hit=product.is_hit,
                         is_sale=product.is_sale,
                         is_recommend=product.is_recommend,
-                        quantity=product.quantity or "1",
+                        quantity=product.quantity,
                         rating=product.rating,
-                        seo_keywords=product.seo_keywords
+                        seo_keywords=product.seo_keywords,
+                        is_variation=product.is_variation,
+                        base_product=base_in_marketplace
                     )
 
                     # Добавляем категории если есть

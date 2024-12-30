@@ -4,15 +4,19 @@ from marketplace.models import Product
 
 
 class Product1CSerializer(serializers.ModelSerializer):
+    base_product_code = serializers.CharField(write_only=True, required=False)
+
     class Meta:
         model = Product1C
-        fields = ('name_en', 'vendor_code', 'price', 'status')
+        fields = ('name_en', 'vendor_code', 'price', 'status', 'is_variation', 'base_product_code')
 
     def create(self, validated_data):
         vendor_code = validated_data['vendor_code']
         name_en = validated_data['name_en']
         price = validated_data['price']
         status = validated_data['status']
+        is_variation = validated_data.get('is_variation', False)
+        base_product_code = validated_data.pop('base_product_code', None)
 
         # Проверяем существование товара в основном каталоге
         main_product = Product.objects.filter(vendor_code=vendor_code).first()
@@ -23,6 +27,12 @@ class Product1CSerializer(serializers.ModelSerializer):
                 main_product.name_en = name_en
                 main_product.price = price
                 main_product.status = status
+
+                if is_variation and base_product_code:
+                    base_product = Product.objects.filter(vendor_code=base_product_code).first()
+                    main_product.base_product = base_product
+                    main_product.is_variation = True
+
                 main_product.save()
 
                 # Создаем временную запись в 1С для логирования
@@ -30,8 +40,15 @@ class Product1CSerializer(serializers.ModelSerializer):
                     name_en=name_en,
                     vendor_code=vendor_code,
                     price=price,
-                    status=status
+                    status=status,
+                    is_variation=is_variation
                 )
+
+                if is_variation and base_product_code:
+                    base_product_1c = Product1C.objects.filter(vendor_code=base_product_code).first()
+                    if base_product_1c:
+                        instance.base_product = base_product_1c
+                        instance.save()
 
                 # Логируем обновление
                 SyncLog.objects.create(
@@ -45,15 +62,13 @@ class Product1CSerializer(serializers.ModelSerializer):
                     )
                 )
 
-                # Удаляем временную запись
                 instance.delete()
-
                 return validated_data
 
             except Exception as e:
                 raise serializers.ValidationError(f"Ошибка при обновлении товара: {str(e)}")
 
-        # Если товара нет в основном каталоге, проверяем наличие в 1C
+        # Если товара нет в основном каталоге
         instance = Product1C.objects.filter(vendor_code=vendor_code).first()
 
         if instance:
@@ -66,9 +81,15 @@ class Product1CSerializer(serializers.ModelSerializer):
             instance.name_en = name_en
             instance.price = price
             instance.status = status
+            instance.is_variation = is_variation
+
+            if is_variation and base_product_code:
+                base_product_1c = Product1C.objects.filter(vendor_code=base_product_code).first()
+                if base_product_1c:
+                    instance.base_product = base_product_1c
+
             instance.save()
 
-            # Логируем обновление
             SyncLog.objects.create(
                 product_1c=instance,
                 sync_type='update',
@@ -81,15 +102,19 @@ class Product1CSerializer(serializers.ModelSerializer):
             )
         else:
             try:
-                # Создаем новый товар в 1C
+                base_product_1c = None
+                if is_variation and base_product_code:
+                    base_product_1c = Product1C.objects.filter(vendor_code=base_product_code).first()
+
                 instance = Product1C.objects.create(
                     name_en=name_en,
                     vendor_code=vendor_code,
                     price=price,
-                    status=status
+                    status=status,
+                    is_variation=is_variation,
+                    base_product=base_product_1c
                 )
 
-                # Логируем создание
                 SyncLog.objects.create(
                     product_1c=instance,
                     sync_type='create',

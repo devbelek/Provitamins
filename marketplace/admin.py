@@ -84,7 +84,7 @@ class ProductAdmin(admin.ModelAdmin, DynamicArrayMixin):
                 'name_en', 'name', 'description'
             )
         }),
-        ('Вариации', {
+        ('Вариации товара', {
             'fields': (
                 'is_variation', 'base_product',
                 'flavor', 'dosage', 'quantity'
