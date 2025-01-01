@@ -22,7 +22,7 @@ class Product1C(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='variations_1c',
+        related_name='product1c_variations',
         verbose_name='Базовый товар',
         help_text='Если это вариация, укажите базовый товар'
     )
@@ -30,8 +30,8 @@ class Product1C(models.Model):
         default=False,
         verbose_name='Является вариацией',
         help_text='Отметьте, если это вариация другого товара',
-        null = True,
-        blank = True,
+        null=True,
+        blank=True,
     )
     similar_products = models.ManyToManyField(
         'self',

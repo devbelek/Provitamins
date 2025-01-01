@@ -73,7 +73,8 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "base_product":
-            kwargs["queryset"] = Product.objects.filter(is_variation=False)
+            kwargs["queryset"] = Product.objects.filter(
+                is_variation=False)
             return db_field.formfield(**kwargs)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
@@ -86,7 +87,6 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
         ).prefetch_related(
             'categories',
             'similar_products',
-            'variations_1c'
         )
 
     def published_status(self, obj):
@@ -106,43 +106,41 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
     def publish_products(self, request, queryset):
         for product in queryset:
             if not product.published_product:
+                # Проверка обязательных полей
                 if not all([product.brand, product.manufacturer_country]):
                     self.message_user(
                         request,
                         f'Товар {product.name_en} не может быть опубликован. '
                         f'Заполните обязательные поля (Бренд, Страна производитель)',
-                        level='ERROR'
+                        level=messages.ERROR
                     )
                     continue
 
                 try:
-                    # Проверяем базовый товар
+                    # Проверяем базовый товар для вариации
                     base_in_marketplace = None
-                    if product.is_variation and product.base_product:
-                        # Ищем базовый товар в основном каталоге
-                        base_in_marketplace = Product.objects.filter(
-                            vendor_code=product.base_product.vendor_code
-                        ).first()
+                    if product.is_variation:
+                        # Проверяем наличие базового товара
+                        if not product.base_product:
+                            self.message_user(
+                                request,
+                                f'Товар {product.name_en} не может быть опубликован. '
+                                f'Укажите базовый товар для вариации.',
+                                level=messages.ERROR
+                            )
+                            continue
 
-                        # Если базового товара нет в основном каталоге
+                        # Проверяем существование базового товара в основном каталоге
+                        base_in_marketplace = product.base_product  # Теперь base_product - это прямая ссылка на Product
                         if not base_in_marketplace:
-                            # Проверяем опубликован ли он
-                            if not product.base_product.published_product:
-                                # Публикуем базовый товар
-                                self.publish_products(request, Product1C.objects.filter(pk=product.base_product.pk))
+                            self.message_user(
+                                request,
+                                f'Не удалось найти базовый товар для {product.name_en}',
+                                level=messages.ERROR
+                            )
+                            continue
 
-                            base_in_marketplace = Product.objects.filter(
-                                vendor_code=product.base_product.vendor_code
-                            ).first()
-
-                            if not base_in_marketplace:
-                                self.message_user(
-                                    request,
-                                    f'Не удалось найти или опубликовать базовый товар для {product.name_en}',
-                                    level='ERROR'
-                                )
-                                continue
-
+                    # Создаем новый товар
                     new_product = Product.objects.create(
                         name=product.name or product.name_en,
                         name_en=product.name_en,
@@ -166,6 +164,7 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
                         base_product=base_in_marketplace
                     )
 
+                    # Добавляем категории
                     if hasattr(product, 'categories'):
                         new_product.categories.set(product.categories.all())
 
@@ -180,9 +179,10 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
                             self.message_user(
                                 request,
                                 f'Ошибка при копировании изображения: {str(img_error)}',
-                                level='WARNING'
+                                level=messages.WARNING
                             )
 
+                    # Создаем лог
                     SyncLog.objects.create(
                         product_1c=product,
                         sync_type='publish',
@@ -190,19 +190,20 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
                         message='Товар успешно опубликован в основном каталоге'
                     )
 
+                    # Удаляем товар из 1С после успешной публикации
                     product.delete()
 
                     self.message_user(
                         request,
                         f'Товар {product.name_en} успешно опубликован',
-                        level='SUCCESS'
+                        level=messages.SUCCESS
                     )
 
                 except Exception as e:
                     self.message_user(
                         request,
                         f'Ошибка при публикации товара {product.name_en}: {str(e)}',
-                        level='ERROR'
+                        level=messages.ERROR
                     )
 
     publish_products.short_description = 'Опубликовать выбранные товары'

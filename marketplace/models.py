@@ -95,7 +95,7 @@ class Product(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='variations',
+        related_name='marketplace_variations',
         verbose_name='Базовый товар',
         help_text='Если это вариация, укажите базовый товар'
     )
