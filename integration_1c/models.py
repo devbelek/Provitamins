@@ -22,7 +22,7 @@ class Product1C(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='variations',
+        related_name='variations_1c',
         verbose_name='Базовый товар',
         help_text='Если это вариация, укажите базовый товар'
     )
@@ -41,27 +41,35 @@ class Product1C(models.Model):
         help_text="Товары с похожими характеристиками (например, тот же продукт с другим вкусом)"
     )
 
-    categories = models.ManyToManyField(Category, verbose_name='Категории', related_name='products_1c', blank=True, null=True)
+    categories = models.ManyToManyField(
+        Category,
+        verbose_name='Категории',
+        related_name='products_1c',
+        blank=True,
+        )
     brand = models.ForeignKey(
         Brand,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
         verbose_name='Бренд',
-        related_name='products_1c')
+        related_name='products_1c'
+    )
     manufacturer_country = models.ForeignKey(
         Country,
         on_delete=models.CASCADE,
         verbose_name='Страна производитель',
         related_name='products_1c',
-        null=True)
+        null=True
+    )
     form = models.ForeignKey(
         Form,
         on_delete=models.CASCADE,
         verbose_name='Форма',
         related_name='products_1c',
         blank=True,
-        null=True)
+        null=True
+    )
 
     flavor = models.CharField(max_length=255, verbose_name='Вкус', blank=True, null=True)
     dosage = models.CharField(max_length=255, verbose_name='Дозировка', blank=True, null=True)
