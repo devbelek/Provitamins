@@ -73,7 +73,8 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "base_product":
-            kwargs["queryset"] = Product1C.objects.filter(is_variation=False)
+            kwargs["queryset"] = Product.objects.filter(is_variation=False)
+            return db_field.formfield(**kwargs)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def get_queryset(self, request):
@@ -233,6 +234,17 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
                 obj.published_product = False
                 super().save_model(request, obj, form, change)
                 return
+
+            if obj.is_variation and obj.base_product:
+                base_product = Product.objects.filter(id=obj.base_product.id).first()
+                if not base_product:
+                    messages.error(
+                        request,
+                        'Базовый товар не найден в основном каталоге'
+                    )
+                    obj.published_product = False
+                    super().save_model(request, obj, form, change)
+                    return
 
             self.publish_products(request, Product1C.objects.filter(pk=obj.pk))
         else:

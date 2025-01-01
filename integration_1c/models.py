@@ -18,7 +18,7 @@ class ProductImage1C(models.Model):
 
 class Product1C(models.Model):
     base_product = models.ForeignKey(
-        'self',
+        'marketplace.Product',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
