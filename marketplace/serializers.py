@@ -114,7 +114,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_variations(self, obj):
         base_product = obj.base_product if obj.is_variation else obj
-        variations = obj.variations.all() if not obj.is_variation else base_product.variations.all()
+        variations = obj.marketplace_variations.all() if not obj.is_variation else base_product.marketplace_variations.all()
 
         available_variations = []
         for variation in variations:
