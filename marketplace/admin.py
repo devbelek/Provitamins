@@ -107,7 +107,11 @@ class ProductAdmin(admin.ModelAdmin, DynamicArrayMixin):
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
             'brand', 'manufacturer_country', 'form', 'base_product'
-        ).prefetch_related('categories', 'variations')
+        ).prefetch_related(
+            'categories',
+            'marketplace_variations',
+            'product1c_variations'
+        )
 
 
 @admin.register(ProductReview)

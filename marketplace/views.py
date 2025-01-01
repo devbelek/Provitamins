@@ -107,9 +107,7 @@ class ProductViewSet(ReadOnlyModelViewSet):
 
         if base_product:
             # Получаем все вариации базового продукта
-            flavor_variations = base_product.variations.filter(variation_type='flavor')
-            dosage_variations = base_product.variations.filter(variation_type='dosage')
-            quantity_variations = base_product.variations.filter(variation_type='quantity')
+            variations_qs = base_product.marketplace_variations.all()  # Изменено с variations на marketplace_variations
 
             variations['flavors'] = [
                 {
@@ -117,7 +115,7 @@ class ProductViewSet(ReadOnlyModelViewSet):
                     'flavor': v.flavor,
                     'in_stock': v.status == Product.ProductStatus.in_stock,
                     'product_id': v.id
-                } for v in flavor_variations if v.id != instance.id
+                } for v in variations_qs.filter(flavor__isnull=False) if v.id != instance.id
             ]
 
             variations['dosages'] = [
@@ -126,7 +124,7 @@ class ProductViewSet(ReadOnlyModelViewSet):
                     'dosage': v.dosage,
                     'in_stock': v.status == Product.ProductStatus.in_stock,
                     'product_id': v.id
-                } for v in dosage_variations if v.id != instance.id
+                } for v in variations_qs.filter(dosage__isnull=False) if v.id != instance.id
             ]
 
             variations['quantities'] = [
@@ -135,7 +133,7 @@ class ProductViewSet(ReadOnlyModelViewSet):
                     'quantity': v.quantity,
                     'in_stock': v.status == Product.ProductStatus.in_stock,
                     'product_id': v.id
-                } for v in quantity_variations if v.id != instance.id
+                } for v in variations_qs.filter(quantity__isnull=False) if v.id != instance.id
             ]
 
         return Response(variations)
