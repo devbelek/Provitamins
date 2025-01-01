@@ -14,20 +14,20 @@ class Product1CImageInline(admin.TabularInline):
     max_num = 3
 
 
-class SyncLogInline(admin.TabularInline):
-    model = SyncLog
-    extra = 0
-    readonly_fields = ('sync_type', 'status', 'message', 'created_at')
-    can_delete = False
-    max_num = 0
-
-    def has_add_permission(self, request, obj=None):
-        return False
+# class SyncLogInline(admin.TabularInline):
+#     model = SyncLog
+#     extra = 0
+#     readonly_fields = ('sync_type', 'status', 'message', 'created_at')
+#     can_delete = False
+#     max_num = 0
+#
+#     def has_add_permission(self, request, obj=None):
+#         return False
 
 
 @admin.register(Product1C)
 class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
-    inlines = (Product1CImageInline, SyncLogInline)
+    inlines = (Product1CImageInline, )
     filter_horizontal = ('similar_products',)
 
     list_display = (
@@ -252,15 +252,15 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
             super().save_model(request, obj, form, change)
 
 
-@admin.register(SyncLog)
-class SyncLogAdmin(admin.ModelAdmin):
-    list_display = ('product_1c', 'sync_type', 'status', 'created_at')
-    list_filter = ('sync_type', 'status', 'created_at')
-    search_fields = ('product_1c__name_en', 'product_1c__vendor_code', 'message')
-    readonly_fields = ('product_1c', 'sync_type', 'status', 'message', 'created_at')
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
+# @admin.register(SyncLog)
+# class SyncLogAdmin(admin.ModelAdmin):
+#     list_display = ('product_1c', 'sync_type', 'status', 'created_at')
+#     list_filter = ('sync_type', 'status', 'created_at')
+#     search_fields = ('product_1c__name_en', 'product_1c__vendor_code', 'message')
+#     readonly_fields = ('product_1c', 'sync_type', 'status', 'message', 'created_at')
+#
+#     def has_add_permission(self, request):
+#         return False
+#
+#     def has_change_permission(self, request, obj=None):
+#         return False

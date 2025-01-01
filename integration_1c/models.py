@@ -104,6 +104,10 @@ class Product1C(models.Model):
     def __str__(self):
         return f"{self.name_en} ({self.vendor_code})"
 
+    class Meta:
+        verbose_name = 'Товар 1с'
+        verbose_name_plural = 'Товары 1с'
+
 
 class SyncLog(models.Model):
     """Модель для логирования синхронизации"""
