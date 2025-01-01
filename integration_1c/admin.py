@@ -86,7 +86,7 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
         ).prefetch_related(
             'categories',
             'similar_products',
-            'variations'
+            'variations_1c'
         )
 
     def published_status(self, obj):
