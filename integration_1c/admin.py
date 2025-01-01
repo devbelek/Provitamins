@@ -163,7 +163,7 @@ class Product1CAdmin(admin.ModelAdmin, DynamicArrayMixin):
                         is_variation=product.is_variation,
                         base_product=base_in_marketplace
                     )
-
+#sdfsdf
                     # Добавляем категории
                     if hasattr(product, 'categories'):
                         new_product.categories.set(product.categories.all())
